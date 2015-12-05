@@ -1,4 +1,5 @@
-# PostgresDb
+<h1>PostgresDb <a href="https://travis-ci.org/DJDavid98/PHP-PostgreSQL-Database-Class"><img alt="Build Status" src="https://travis-ci.org/DJDavid98/PHP-PostgreSQL-Database-Class.svg"></a></h1>
+
 This project is a PostgreSQL version of @joshcam's [MysqliiDb Class](https://github.com/joshcam/PHP-MySQLi-Database-Class), which has support for the basic functionality and syntax provided by said class, tailored specifically to PostgreSQL.
 
 ## Usage
