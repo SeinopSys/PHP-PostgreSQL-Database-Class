@@ -52,6 +52,11 @@ $Database->where('id', 1)->getOne($table);
 // SELECT * FROM $table LIMIT 1 WHERE "id" != 1
 $Database->where('"id" != 1')->get($table);
 ```
+### Join
+```php
+// SELECT * FROM users u LEFT JOIN "messages" m ON m.user = u.id
+$Database->join('messages m', 'm.user = u.id','LEFT')->get('users u');
+```
 ### Ordering
 ```php
 // SELECT * FROM $table ORDER BY "name" DESC
@@ -85,13 +90,21 @@ echo $id;
 // UPDATE $table SET "name" = 'Dave' WHERE "id" = 1
 $Database->where('id', 1)->update($table,array('name' => 'Dave'));
 ```
+### Check table existence
+```php
+// SELECT to_regclass('public.users') IS NOT NULL as exists LIMIT 1
+echo $Database->tableExists('users');
+```
+
+>true
+
 ### Debugging
  - Last executed query:
    ```php
    $Database->insert('table_name',array('name' => 'Sarah'))
    echo $Database->getLastQuery();
    ```
-   
+
    >INSERT INTO "table_name" ("name") VALUES ('Sarah')
 
  - Last error:
