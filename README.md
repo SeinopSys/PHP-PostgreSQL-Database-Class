@@ -52,6 +52,9 @@ $Database->where('id', 1)->getOne($table);
 
 // SELECT * FROM $table LIMIT 1 WHERE "id" != 1
 $Database->where('"id" != 1')->get($table);
+
+// SELECT * FROM $table LIMIT 1 WHERE "id" != 1
+$Database->where('id', array('!=' => 1))->get($table);
 ```
 ### Join
 ```php
@@ -91,16 +94,22 @@ echo $id;
 // UPDATE $table SET "name" = 'Dave' WHERE "id" = 1
 $Database->where('id', 1)->update($table,array('name' => 'Dave'));
 ```
-### Check table existence
-```php
-// SELECT to_regclass('public.users') IS NOT NULL as exists LIMIT 1
-echo $Database->tableExists('users');
-```
-
->true
 
 ### Debugging
- - Last executed query:
+ - Check if a table exists: (`tableExists()::bool`)
+   ```php
+   $Database->tableExists('table_name');
+   ```
+ - Get # of rows: (`count()::int`)
+   ```php
+   $Database->count('table_name');
+   $Database->where('"id" = 2')->count('table_name');
+ - Check if request returns any rows: (`has()::bool`)
+   ```php
+   $Database->has('table_name');
+   $Database->where('"id" = 2')->has('table_name');
+   ```
+ - Last executed query: (`getLastQuery()::string`)
    ```php
    $Database->insert('table_name',array('name' => 'Sarah'))
    echo $Database->getLastQuery();
