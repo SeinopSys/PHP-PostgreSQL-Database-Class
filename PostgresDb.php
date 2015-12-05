@@ -96,8 +96,7 @@
 				$this->_conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_WARNING);
 			}
 			catch (PDOException $e){
-				echo "Database connection error: ".$e->getMessage();
-				exit;
+				throw new Exception("Database connection error: ".$e->getMessage());
 			}
 		}
 
@@ -222,7 +221,7 @@
 				if (preg_match('~^[a-z_\-\d]+$~', $varName)){
 					$varName = "\"$varName\"";
 				}
-				$this->_query .= " $concat $varName";
+				$this->_query .= ' '.trim("$concat $varName");
 
 				switch (strtolower($operator)) {
 					case 'not in':
@@ -260,6 +259,7 @@
 						}
 				}
 			}
+			$this->_query = rtrim($this->_query);
 		}
 
 		public function _buildDataPairs($tableData, $tableColumns, $isInsert){
@@ -339,7 +339,7 @@
 				else $this->_query .= "$prop $value, ";
 			}
 
-			$this->_query = rtrim($this->_query, ', ').' ';
+			$this->_query = rtrim($this->_query, ', ');
 		}
 
 		/**
