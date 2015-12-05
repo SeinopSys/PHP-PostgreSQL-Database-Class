@@ -77,7 +77,9 @@ Ask for values of inserted columns:
 $id = $Database->insert($table,array('name' => 'Joe'),'id');
 echo $id;
 ```
+
 >15
+
 ### Update
 ```php
 // UPDATE $table SET "name" = 'Dave' WHERE "id" = 1
@@ -89,6 +91,7 @@ $Database->where('id', 1)->update($table,array('name' => 'Dave'));
    $Database->insert('table_name',array('name' => 'Sarah'))
    echo $Database->getLastQuery();
    ```
+   
    >INSERT INTO "table_name" ("name") VALUES ('Sarah')
 
  - Last error:
