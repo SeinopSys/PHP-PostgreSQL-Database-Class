@@ -441,7 +441,7 @@
 			else if (!is_array($bindParams))
 				throw new Exception('$bindParams must be an array');
 			else {
-				$this->_bindParams =  $bindParams;
+				$this->_bindParams = $bindParams;
 			}
 
 			$res = $this->_execStatement($stmt);
