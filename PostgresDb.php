@@ -436,7 +436,13 @@
 			$this->_alterQuery();
 
 			$stmt = $this->_prepareQuery();
-			$this->_bindParams = is_array($bindParams) ? $bindParams : null;
+			if (empty($bindParams))
+				$this->_bindParams = null;
+			else if (!is_array($bindParams))
+				throw new Exception('$bindParams must be an array');
+			else {
+				$this->_bindParams =  $bindParams;
+			}
 
 			$res = $this->_execStatement($stmt);
 
