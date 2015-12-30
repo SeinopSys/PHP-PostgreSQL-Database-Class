@@ -91,13 +91,8 @@
 		}
 
 		protected function _connect(){
-			try {
-				$this->_conn = new PDO($this->_connstr);
-				$this->_conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_WARNING);
-			}
-			catch (PDOException $e){
-				throw new Exception("Database connection error: ".$e->getMessage());
-			}
+			$this->_conn = new PDO($this->_connstr);
+			$this->_conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_WARNING);
 		}
 
 		public function pdo(){
