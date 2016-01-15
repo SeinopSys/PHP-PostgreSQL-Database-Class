@@ -19,56 +19,56 @@
 			 *
 			 * @var PDO
 			 */
-				$_conn,
+			$_conn,
 			/**
 			 * The SQL query to be prepared and executed
 			 *
 			 * @var string
 			 */
-				$_query,
+			$_query,
 			/**
 			 * The previously executed SQL query
 			 *
 			 * @var string
 			 */
-				$_lastQuery,
+			$_lastQuery,
 			/**
 			 * An array that holds where joins
 			 *
 			 * @var array
 			 */
-				$_join = array(),
+			$_join = array(),
 			/**
 			 * An array that holds where conditions 'fieldname' => 'value'
 			 *
 			 * @var array
 			 */
-				$_where = array(),
+			$_where = array(),
 			/**
 			 * Dynamic type list for order by condition value
 			 */
-				$_orderBy = array(),
+			$_orderBy = array(),
 			/**
 			 * Dynamic type list for group by condition value
 			 */
-				$_groupBy = array(),
+			$_groupBy = array(),
 			/**
 			 * Dynamic array that holds a combination of where condition/table data value types and parameter references
 			 *
 			 * @var array|null
 			 */
-				$_bindParams = null,
+			$_bindParams = null,
 			/**
 			 * Name of the auto increment column
 			 *
 			 */
-				$_lastInsertId = null,
+			$_lastInsertId = null,
 			/**
 			 * Variable which holds last statement error
 			 *
 			 * @var string
 			 */
-				$_stmtError = null;
+			$_stmtError = null;
 
 		public
 			/**
@@ -76,7 +76,7 @@
 			 *
 			 * @var string
 			 */
-				$count = 0;
+			$count = 0;
 
 		private
 			/**
@@ -84,7 +84,7 @@
 			 *
 			 * @var string
 			 */
-				$_connstr;
+			$_connstr;
 
 		public function __construct($db, $host = DB_HOST, $user = DB_USER, $pass = DB_PASS){
 			$this->_connstr = "pgsql:host=$host user=$user password=$pass dbname=$db options='--client_encoding=UTF8'";
@@ -266,8 +266,9 @@
 
 				// Simple value
 				if (!is_array($value)){
-					if (is_bool($value))
+					if (is_bool($value)){
 						$value = $value ? 'true' : 'false';
+					}
 					$this->_bindParam($value);
 					$this->_query .= '?, ';
 					continue;
@@ -348,7 +349,8 @@
 		 * @return boolean Boolean indicating whether the insert query was completed succesfully.
 		 */
 		private function _buildInsert($tableName, $insertData, $operation, $returnColumn = null){
-			$this->_query = "$operation INTO ".$this->_escapeTableName($tableName);
+			$tableName = $this->_escapeTableName($tableName);
+			$this->_query = "$operation INTO $tableName";
 			if (!empty($returnColumn)){
 				$returnColumn = trim($returnColumn);
 			}
@@ -379,10 +381,10 @@
 			}
 
 			$this->_query .= ' LIMIT '.(
-					is_array($numRows)
-							? (int) $numRows[1].' OFFSET '.(int) $numRows[0]
-							: (int) $numRows
-					);
+				is_array($numRows)
+					? (int) $numRows[1].' OFFSET '.(int) $numRows[0]
+					: (int) $numRows
+				);
 		}
 
 		/**
@@ -431,10 +433,12 @@
 			$this->_alterQuery();
 
 			$stmt = $this->_prepareQuery();
-			if (empty($bindParams))
+			if (empty($bindParams)){
 				$this->_bindParams = null;
-			else if (!is_array($bindParams))
+			}
+			else if (!is_array($bindParams)){
 				throw new Exception('$bindParams must be an array');
+			}
 			else {
 				$this->_bindParams = $bindParams;
 			}
@@ -577,6 +581,7 @@
 
 			$column = is_array($columns) ? implode(', ', $columns) : $columns;
 
+			$tableName = $this->_escapeTableName($tableName);
 			$this->_query = "SELECT $column FROM $tableName";
 			$stmt = $this->_buildQuery($numRows);
 
@@ -627,6 +632,7 @@
 		 * @return boolean
 		 */
 		public function update($tableName, $tableData){
+			$tableName = $this->_escapeTableName($tableName);
 			$this->_query = "UPDATE $tableName";
 			$stmt = $this->_buildQuery(null, $tableData);
 
@@ -660,7 +666,7 @@
 		public function delete($tableName, $numRows = null){
 			$table = $this->_escapeTableName($tableName);
 			if (count($this->_join)){
-				$this->_query = "DELETE ".preg_replace('~^".*" (.*)$~', '$1', $table)." FROM $table";
+				$this->_query = "DELETE ".preg_replace('~^".*"\s+(.*)$~', '$1', $table)." FROM $table";
 			}
 			else {
 				$this->_query = "DELETE FROM $table";
@@ -692,6 +698,7 @@
 				die("Wrong JOIN type: $joinType");
 			}
 
+			$joinTable = $this->_escapeTableName($joinTable);
 			$this->_join[] = array($joinType, $joinTable, $joinCondition);
 
 			return $this;
@@ -725,8 +732,8 @@
 				$result = $stmt->fetchAll(PDO::FETCH_ASSOC);
 			}
 			$this->_lastQuery = isset($this->_bindParams)
-					? $this->_replacePlaceHolders($this->_query, $this->_bindParams)
-					: $this->_query;
+				? $this->_replacePlaceHolders($this->_query, $this->_bindParams)
+				: $this->_query;
 			$this->_reset();
 
 			return $result;
@@ -761,7 +768,7 @@
 		 * @return string
 		 */
 		protected function _escapeTableName($tableName){
-			return preg_replace('~^"?([a-zA-Z\d_\-])"?\s+([a-zA-Z\d]+)$~', '"$1" $2', trim($tableName));
+			return preg_replace('~^"?([a-zA-Z\d_\-]+)"?\s+([a-zA-Z\d]+)$~', '"$1" $2', trim($tableName));
 		}
 
 		/**
