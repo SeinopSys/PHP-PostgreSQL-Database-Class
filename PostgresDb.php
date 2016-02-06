@@ -489,14 +489,14 @@
 		/**
 		 * This method allows you to specify multiple (method chaining optional) AND WHERE statements for SQL queries.
 		 *
-		 * @uses $MySqliDb->where('id', 7)->where('title', 'MyTitle');
+		 * @uses $db->where('id', 7)->where('title', 'MyTitle');
 		 *
 		 * @param string $whereProp  The name of the database field.
 		 * @param mixed  $whereValue The value of the database field.
 		 * @param string $operator
 		 * @param string $cond
 		 *
-		 * @return MysqliDb
+		 * @return PostgresDb
 		 */
 		public function where($whereProp, $whereValue = 'DBNULL', $operator = '=', $cond = 'AND'){
 			if (is_array($whereValue) && ($key = key($whereValue)) != "0"){
@@ -514,13 +514,13 @@
 		/**
 		 * This method allows you to specify multiple (method chaining optional) OR WHERE statements for SQL queries.
 		 *
-		 * @uses $MySqliDb->orWhere('id', 7)->orWhere('title', 'MyTitle');
+		 * @uses $db->orWhere('id', 7)->orWhere('title', 'MyTitle');
 		 *
 		 * @param string $whereProp  The name of the database field.
 		 * @param mixed  $whereValue The value of the database field.
 		 * @param string $operator
 		 *
-		 * @return MysqliDb
+		 * @return PostgresDb
 		 */
 		public function orWhere($whereProp, $whereValue = 'DBNULL', $operator = '='){
 			return $this->where($whereProp, $whereValue, $operator, 'OR');
@@ -529,12 +529,12 @@
 		/**
 		 * This method allows you to specify multiple (method chaining optional) ORDER BY statements for SQL queries.
 		 *
-		 * @uses $MySqliDb->orderBy('id', 'desc')->orderBy('name', 'desc');
+		 * @uses $db->orderBy('id', 'desc')->orderBy('name', 'desc');
 		 *
 		 * @param string $orderByField     The name of the database field.
 		 * @param string $orderbyDirection Order direction.
 		 *
-		 * @return MysqliDb
+		 * @return PostgresDb
 		 */
 		public function orderBy($orderByField, $orderbyDirection = "DESC"){
 			$allowedDirection = array("ASC", "DESC");
@@ -682,13 +682,13 @@
 		/**
 		 * This method allows you to concatenate joins for the final SQL statement.
 		 *
-		 * @uses $MySqliDb->join('table1', 'field1 <> field2', 'LEFT')
+		 * @uses $db->join('table1', 'field1 <> field2', 'LEFT')
 		 *
 		 * @param string $joinTable     The name of the table.
 		 * @param string $joinCondition the condition.
 		 * @param string $joinType      'LEFT', 'INNER' etc.
 		 *
-		 * @return MysqliDb
+		 * @return PostgresDb
 		 */
 		public function join($joinTable, $joinCondition, $joinType = ''){
 			$allowedTypes = array('LEFT', 'RIGHT', 'OUTER', 'INNER', 'LEFT OUTER', 'RIGHT OUTER');
