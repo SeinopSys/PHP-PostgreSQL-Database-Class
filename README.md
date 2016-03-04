@@ -18,6 +18,7 @@ For the examples below, the following `users` table structure is used:
 To prepare a new instance of the class for use, simply construct it:
 
 ```php
+require "PostgresDb.php";
 $Database = new PostgresDb($database_name, $host, $username, $password);
 ```
 
