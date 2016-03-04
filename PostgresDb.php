@@ -107,7 +107,7 @@
 		 * Method attempts to prepare the SQL query
 		 * and throws an error if there was a problem.
 		 *
-		 * @return mysqli_stmt
+		 * @return PDOStatement
 		 */
 		protected function _prepareQuery(){
 			try {
@@ -397,7 +397,7 @@
 		 * @param array         $tableData Should contain an array of data for updating the database.
 		 * @param string|null   $returning What column to return after inserting
 		 *
-		 * @return mysqli_stmt Returns the $stmt object.
+		 * @return PDOStatement Returns the $stmt object.
 		 */
 		protected function _buildQuery($numRows = null, $tableData = null, $returning = null){
 			$this->_buildJoin();
@@ -638,7 +638,7 @@
 
 			$res = $this->_execStatement($stmt);
 
-			return $res;
+			return (bool) $res;
 		}
 
 		/**
@@ -717,6 +717,11 @@
 			return $res['exists'];
 		}
 
+		/**
+		 * @param PDOStatement $stmt Statement to execute
+		 *
+		 * @return bool|array
+		 */
 		protected function _execStatement($stmt){
 			$success = $stmt->execute($this->_bindParams);
 
@@ -788,7 +793,7 @@
 		}
 
 		/**
-		 * Method returns mysql error
+		 * Return last error message
 		 *
 		 * @return string
 		 */
