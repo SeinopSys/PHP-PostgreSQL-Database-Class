@@ -2,7 +2,7 @@
 
 	/**
 	 * PostgresDb Class
-	 * by @DJDavid98 | https://github.com/DJDavid98/PHP-PostgreSQL-Database-Class
+	 * by @SeinopSys | https://github.com/SeinopSys/PHP-PostgreSQL-Database-Class
 	 *
 	 * Heavily based on MysqliDB version 2.4 as made by
 	 *   Jeffery Way <jeffrey@jeffrey-way.com>

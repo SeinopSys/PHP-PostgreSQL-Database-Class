@@ -1,12 +1,12 @@
 {
-	"name": "DJDavid98/PHP-PostgreSQL-Database-Class",
+	"name": "SeinopSys/PHP-PostgreSQL-Database-Class",
 	"description": "PHP wrapper class for PDO-based interaction with PostgreSQL databases",
 	"license": "GPL-3.0",
 	"authors": [
 		{
-			"name": "DJDavid98",
-			"email": "djdavid98@gmail.com",
-			"homepage": "https://djdavid98.hu/",
+			"name": "SeinopSys",
+			"email": "seinopsys@gmail.com",
+			"homepage": "https://github.com/SeinopSys",
 			"role": "Developer"
 		}
 	],
