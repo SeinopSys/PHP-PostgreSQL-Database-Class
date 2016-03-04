@@ -202,7 +202,17 @@ array(
 )
 ```
 
-### Debugging
+### Informational methods
+
+**Note:** These will reset the object, so the following will **NOT** work as expeced:
+
+```php
+$withWhere = $Database->where('"id" = 2');
+if ($withWhere->has('users'))
+	$Database->getOne('users');
+```
+
+Instead of returning the user with the `id` equal to `2`, it'll return whatever row it finds first since the `where` call is no longer in effect.
 
 #### Check if a table exists [`tableExists()::boolean`]
 
@@ -210,7 +220,7 @@ array(
 $Database->tableExists('users'); // true
 ```
 
-#### Get number of rows [`count()::int`]
+#### Get number of matching rows [`count()::int`]
 
 ```php
 $Database->count('users'); // 4
@@ -224,15 +234,7 @@ $Database->has('users'); // true
 $Database->where('"id" = 2')->has('users'); // true
 ```
 
-**Note:** This will reset the object, so the following **will not** work as expeced:
-
-```php
-$withWhere = $Database->where('"id" = 2');
-if ($withWhere->has('users'))
-	$Database->getOne('users');
-```
-
-Instead of returning the user with the `id` equal to `2`, it'll return whatever row it finds first since the `where` call is no longer in effect.
+### Debugging
 
 #### Get last executed query [`getLastQuery()::string`]
 
