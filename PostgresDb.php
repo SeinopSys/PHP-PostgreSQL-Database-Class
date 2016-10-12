@@ -68,7 +68,31 @@
 			 *
 			 * @var string
 			 */
-			$_stmtError = null;
+			$_stmtError = null,
+			/**
+			 * Allows the use of the tableNameToClassName method
+			 *
+			 * @var string
+			 */
+			$_autoClass = true,
+			/**
+			 * Name of table we're performing the action on
+			 *
+			 * @var string
+			 */
+			$_tableName,
+			/**
+			 * Type of fetch to perform
+			 *
+			 * @var string
+			 */
+			$_fetchType = PDO::FETCH_ASSOC,
+			/**
+			 * Fetch argument
+			 *
+			 * @var string
+			 */
+			$_fetchArg;
 
 		public
 			/**
@@ -95,6 +119,7 @@
 			$this->_conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_WARNING);
 		}
 
+		/** @return PDO */
 		public function pdo(){
 			if (!$this->_conn){
 				$this->_connect();
@@ -200,6 +225,10 @@
 			}
 		}
 
+		protected function _escapeApostrophe($str){
+			return preg_replace('~(^|[^\'])\'~', '$1\'\'', $str);
+		}
+
 		/**
 		 * Abstraction method that will build the part of the WHERE conditions
 		 */
@@ -213,8 +242,8 @@
 
 			foreach ($this->_where as $cond){
 				list ($concat, $varName, $operator, $val) = $cond;
-				if (preg_match('~^[a-z_\-\d]+$~', $varName)){
-					$varName = "\"$varName\"";
+				if (preg_match('~^"?([a-z_\-\d]+)"?(?:->>\'?([\w\d\-]+)\'?)?$~', $varName, $match)){
+					$varName = "\"$match[1]\"".(isset($match[2]) ? "->>'".self::_escapeApostrophe($match[2])."'" : '');
 				}
 				$this->_query .= ' '.trim("$concat $varName");
 
@@ -341,7 +370,7 @@
 		/**
 		 * Internal function to build and execute INSERT/REPLACE calls
 		 *
-		 * @param <string $tableName The name of the table.
+		 * @param string      $tableName The name of the table.
 		 * @param array       $insertData   Data containing information for inserting into the DB.
 		 * @param             $operation
 		 * @param string|null $returnColumn What column to return after insert
@@ -483,7 +512,7 @@
 		 * @return int
 		 */
 		public function count($table){
-			return $this->getOne($table, 'COUNT(*)::int as c')['c'];
+			return $this->disableAutoClass()->getOne($table, 'COUNT(*)::int as c')['c'];
 		}
 
 		/**
@@ -496,7 +525,7 @@
 		 * @param string $operator
 		 * @param string $cond
 		 *
-		 * @return PostgresDb
+		 * @return self
 		 */
 		public function where($whereProp, $whereValue = 'DBNULL', $operator = '=', $cond = 'AND'){
 			if (is_array($whereValue) && ($key = key($whereValue)) != "0"){
@@ -512,6 +541,31 @@
 		}
 
 		/**
+		 * Sets a class to be used as the PDO::fetchAll argument
+		 *
+		 * @param object|string $class
+		 *
+		 * @return self
+		 */
+		public function setClass($class){
+			$this->_fetchType = PDO::FETCH_CLASS;
+			$this->_fetchArg = $class;
+
+			return $this;
+		}
+
+		/**
+		 * Disabled the tableNameToClassName method
+		 *
+		 * @return self
+		 */
+		public function disableAutoClass(){
+			$this->_autoClass = false;
+
+			return $this;
+		}
+
+		/**
 		 * This method allows you to specify multiple (method chaining optional) OR WHERE statements for SQL queries.
 		 *
 		 * @uses $db->orWhere('id', 7)->orWhere('title', 'MyTitle');
@@ -520,7 +574,7 @@
 		 * @param mixed  $whereValue The value of the database field.
 		 * @param string $operator
 		 *
-		 * @return PostgresDb
+		 * @return self
 		 */
 		public function orWhere($whereProp, $whereValue = 'DBNULL', $operator = '='){
 			return $this->where($whereProp, $whereValue, $operator, 'OR');
@@ -534,7 +588,7 @@
 		 * @param string $orderByField     The name of the database field.
 		 * @param string $orderbyDirection Order direction.
 		 *
-		 * @return PostgresDb
+		 * @return self
 		 */
 		public function orderBy($orderByField, $orderbyDirection = "DESC"){
 			$allowedDirection = array("ASC", "DESC");
@@ -556,7 +610,7 @@
 		 * @param string $orderstr  Raw ordering sting
 		 * @param string $direction Order direction
 		 *
-		 * @return dbObject
+		 * @return self
 		 */
 		public function orderByLiteral($orderstr, $direction = 'ASC'){
 			$this->_orderBy[$orderstr] = $direction;
@@ -567,10 +621,10 @@
 		/**
 		 * A convenient SELECT * function.
 		 *
-		 * @param string        $tableName The name of the database table to work with.
-		 * @param integer|array $numRows   Array to define SQL limit in format Array ($count, $offset)
-		 *                                 or only $count
-		 * @param string        $columns
+		 * @param string    $tableName The name of the database table to work with.
+		 * @param int|int[] $numRows   Array to define SQL limit in format Array ($count, $offset)
+		 *                             or only $count
+		 * @param string    $columns
 		 *
 		 * @return array Contains the returned rows from the select query.
 		 */
@@ -585,6 +639,8 @@
 			$this->_query = "SELECT $column FROM $tableName";
 			$stmt = $this->_buildQuery($numRows);
 
+			if ($this->_autoClass)
+				$this->_tableName = $tableName;
 			$res = $this->_execStatement($stmt);
 
 			return $res;
@@ -596,7 +652,7 @@
 		 * @param string $tableName The name of the database table to work with.
 		 * @param string $columns
 		 *
-		 * @return array Contains the returned rows from the select query.
+		 * @return array|object|null
 		 */
 		public function getOne($tableName, $columns = '*'){
 			$res = $this->get($tableName, 1, $columns);
@@ -617,7 +673,7 @@
 		 *
 		 * @param string $tableName The name of the database table to work with.
 		 *
-		 * @return array Contains the returned rows from the select query.
+		 * @return bool
 		 */
 		public function has($tableName){
 			return $this->count($tableName) >= 1;
@@ -629,7 +685,7 @@
 		 * @param string $tableName The name of the database table to work with.
 		 * @param array  $tableData Array of data to update the desired row.
 		 *
-		 * @return boolean
+		 * @return bool
 		 */
 		public function update($tableName, $tableData){
 			$tableName = $this->_escapeTableName($tableName);
@@ -661,7 +717,7 @@
 		 * @param integer|array $numRows   Array to define SQL limit in format Array ($count, $offset)
 		 *                                 or only $count
 		 *
-		 * @return boolean Indicates success. 0 or 1.
+		 * @return boolean
 		 */
 		public function delete($tableName, $numRows = null){
 			$table = $this->_escapeTableName($tableName);
@@ -674,6 +730,8 @@
 
 			$stmt = $this->_buildQuery($numRows);
 
+			if ($this->_autoClass)
+				$this->_tableName = $tableName;
 			$res = $this->_execStatement($stmt);
 
 			return $this->count > 0;
@@ -684,13 +742,14 @@
 		 *
 		 * @uses $db->join('table1', 'field1 <> field2', 'LEFT')
 		 *
-		 * @param string $joinTable     The name of the table.
-		 * @param string $joinCondition the condition.
-		 * @param string $joinType      'LEFT', 'INNER' etc.
+		 * @param string $joinTable        The name of the table.
+		 * @param string $joinCondition    the condition.
+		 * @param string $joinType         'LEFT', 'INNER' etc.
+		 * @param bool   $disableAutoClass Disable automatic result conversion to class (since result may contain data from other tables)
 		 *
-		 * @return PostgresDb
+		 * @return self
 		 */
-		public function join($joinTable, $joinCondition, $joinType = ''){
+		public function join($joinTable, $joinCondition, $joinType = '', $disableAutoClass = true){
 			$allowedTypes = array('LEFT', 'RIGHT', 'OUTER', 'INNER', 'LEFT OUTER', 'RIGHT OUTER');
 			$joinType = strtoupper(trim($joinType));
 
@@ -700,6 +759,9 @@
 
 			$joinTable = $this->_escapeTableName($joinTable);
 			$this->_join[] = array($joinType, $joinTable, $joinCondition);
+
+			if ($disableAutoClass)
+				$this->disableAutoClass();
 
 			return $this;
 		}
@@ -720,7 +782,7 @@
 		/**
 		 * @param PDOStatement $stmt Statement to execute
 		 *
-		 * @return bool|array
+		 * @return bool|array|object[]
 		 */
 		protected function _execStatement($stmt){
 			$success = $stmt->execute($this->_bindParams);
@@ -734,17 +796,23 @@
 			else {
 				$this->count = $stmt->rowCount();
 				$this->_stmtError = null;
-				$result = $stmt->fetchAll(PDO::FETCH_ASSOC);
+				if (isset($this->_fetchArg))
+					$result = $stmt->fetchAll($this->_fetchType, $this->_fetchArg);
+				else $result = $stmt->fetchAll($this->_fetchType);
 			}
 			$this->_lastQuery = isset($this->_bindParams)
 				? $this->_replacePlaceHolders($this->_query, $this->_bindParams)
 				: $this->_query;
-			$this->_reset();
+			$this->reset();
 
 			return $result;
 		}
 
-		protected function _reset(){
+		public function reset(){
+			$this->_autoClass = true;
+			$this->_tableName = null;
+			$this->_fetchType = PDO::FETCH_ASSOC;
+			$this->_fetchArg = null;
 			$this->_where = array();
 			$this->_join = array();
 			$this->_orderBy = array();
@@ -803,6 +871,28 @@
 			}
 
 			return trim($this->_stmtError);
+		}
+
+		/**
+		 * Returns the class name expected for the table name
+		 * This is a utility function for use in case you want to make your own automatic table<->class bindings using a wrapper class
+		 *
+		 * @param bool $namespaced
+		 *
+		 * @return string|null
+		 */
+		public function tableNameToClassName($namespaced = false){
+			$className = $this->_tableName;
+			if (isset($this->_tableName)){
+				$className = preg_replace('/s(_|$)/','$1',preg_replace_callback('/(?:^|-)([a-z])/',function($match){
+					return strtoupper($match[1]);
+				},$className));
+				$append = $namespaced?'\\':'';
+				$className = preg_replace_callback('/__([a-z])/',function($match) use ($append){
+					return $append.strtoupper($match[1]);
+				},$className);
+			}
+			return $className;
 		}
 
 		/**

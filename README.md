@@ -2,6 +2,18 @@
 
 This project is a PostgreSQL version of @joshcam's [MysqliDb Class](https://github.com/joshcam/PHP-MySQLi-Database-Class), that has support for the basic functionality and syntax provided by said class, tailored specifically to PostgreSQL.
 
+## Installation
+
+The same methods used to install MysqliDb apply.
+
+### Manual
+
+Place `PostgresDb.php` in your project and require/include it.
+
+### Composer
+
+    composer require seinopsys/postgresql-database-class:dev-master
+
 ## Usage
 
 For the examples below, the following `users` table structure is used:
@@ -254,4 +266,54 @@ This can be useful after a failed `insert`/`update` call, for example.
 // Duplicated ID
 $Database->insert('users',array('id' => '1', 'name' => 'Fred'))
 echo $Database->getLastError(); // #1062 - Duplicate entry '1' for key 'PRIMARY'
+```
+
+### Extending functionality
+
+### Number of executed queries
+
+With a simple wrapper class it's trivial to include a query counter if need be.
+
+```php
+class PostgresDbWrapper extends PostgresDb {
+    public $query_count = 0;
+
+    /**
+     * @param PDOStatement $stmt Statement to execute
+     *
+     * @return bool|array|object[]
+     */
+    protected function _execStatement($stmt){
+        $this->query_count++;
+        return parent::_execStatement($stmt);
+    }
+}
+```
+
+### Object return values
+
+The script contains two utility methods (`tableNameToClassName` and `setClass`) which allow for the creation of a wrapper that can force returned values into a class instead of an array. This allows for using both the array and class method simultaneously with minimal effort. And example of such a wrapper class is shown below.
+
+This assumes an autoloader is configured within the project which allows classes to be loaded on the fly as needed. This method will cause the autoloader to attempt loading the class within the `DB` namespace when `class_exists` is called. If it fails, a key is set on a private array. This prevents future checks for the existence of the same class, which could otherwise impact the application's performace.
+
+```php
+class PostgresDbWrapper extends PostgresDb {
+    private $_nonexistantClassCache = array();
+
+    /**
+     * @param PDOStatement $stmt Statement to execute
+     *
+     * @return bool|array|object[]
+     */
+    protected function _execStatement($stmt){
+        $className = $this->tableNameToClassName();
+        if (isset($className) && empty($this->_nonexistantClassCache[$className])){
+            if (!class_exists("\\DB\\$className"))
+                $this->_nonexistantClassCache[$className] = true;
+            else $this->setClass("\\DB\\$className");
+        }
+
+        return parent::_execStatement($stmt);
+    }
+}
 ```
