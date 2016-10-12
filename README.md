@@ -197,7 +197,7 @@ array(
 )
 ```
 
-If you want the power of a cuatom query, but also the convenience of getting the result as a single array instead of having to use `$result[0]` all the time (which may even trigger an error if no results are found and the value becomes `null`) you can use `rawQuerySingle` which returns only a single result, similar to how `getOne` works.
+If you want the power of a custom query, but also the convenience of getting the result as a single array instead of having to use `$result[0]` all the time (which may even trigger an error if no results are found and the value becomes `null`) you can use `rawQuerySingle` which returns only a single result, similar to how `getOne` works.
 
 ```php
 $Database->rawQuerySingle("SELECT * FROM 'users' WHERE id = 4");
