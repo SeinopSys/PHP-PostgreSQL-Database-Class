@@ -305,15 +305,20 @@ class PostgresDbWrapper extends PostgresDb {
      *
      * @return bool|array|object[]
      */
-    protected function _execStatement($stmt){
-        $className = $this->tableNameToClassName();
-        if (isset($className) && empty($this->_nonexistantClassCache[$className])){
-            if (!class_exists("\\DB\\$className"))
-                $this->_nonexistantClassCache[$className] = true;
-            else $this->setClass("\\DB\\$className");
-        }
+	protected function _execStatement($stmt){
+		$className = $this->tableNameToClassName();
+		if (isset($className) && empty($this->_nonexistantClassCache[$className])){
+			try {
+				if (!class_exists("\\DB\\$className"))
+					throw new Exception();
 
-        return parent::_execStatement($stmt);
-    }
+				$this->setClass("\\DB\\$className");
+			}
+			catch (Exception $e){ $this->_nonexistantClassCache[$className] = true; }
+		}
+
+		$this->query_count++;
+		return parent::_execStatement($stmt);
+	}
 }
 ```
