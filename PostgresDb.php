@@ -229,6 +229,12 @@
 			return preg_replace('~(^|[^\'])\'~', '$1\'\'', $str);
 		}
 
+		protected function _escapeSqlKeyword($word){
+			if (in_array(strtolower($word),array('user','update','create','select','from','insert','into','group','having')))
+				$word = "\"$word\"";
+			return  $word;
+		}
+
 		/**
 		 * Abstraction method that will build the part of the WHERE conditions
 		 */
@@ -242,9 +248,11 @@
 
 			foreach ($this->_where as $cond){
 				list ($concat, $varName, $operator, $val) = $cond;
+				$varName = $this->_escapeSqlKeyword($varName);
 				if (preg_match('~^"?([a-z_\-\d]+)"?(?:->>\'?([\w\d\-]+)\'?)?$~', $varName, $match)){
 					$varName = "\"$match[1]\"".(isset($match[2]) ? "->>'".self::_escapeApostrophe($match[2])."'" : '');
 				}
+
 				$this->_query .= ' '.trim("$concat $varName");
 
 				switch (strtolower($operator)) {
@@ -621,10 +629,10 @@
 		/**
 		 * A convenient SELECT * function.
 		 *
-		 * @param string    $tableName The name of the database table to work with.
-		 * @param int|int[] $numRows   Array to define SQL limit in format Array ($count, $offset)
-		 *                             or only $count
-		 * @param string    $columns
+		 * @param string       $tableName The name of the database table to work with.
+		 * @param int|int[]    $numRows   Array to define SQL limit in format Array ($count, $offset)
+		 *                                or only $count
+		 * @param string|array $columns
 		 *
 		 * @return array Contains the returned rows from the select query.
 		 */
@@ -632,11 +640,15 @@
 			if (empty ($columns)){
 				$columns = '*';
 			}
-
-			$column = is_array($columns) ? implode(', ', $columns) : $columns;
+			else {
+				if (!is_array($columns))
+					$columns = explode(',', $columns);
+				$columns = array_map(array($this,'_escapeSqlKeyword'), $columns);
+				$columns = implode(', ', $columns);
+			}
 
 			$tableName = $this->_escapeTableName($tableName);
-			$this->_query = "SELECT $column FROM $tableName";
+			$this->_query = "SELECT $columns FROM $tableName";
 			$stmt = $this->_buildQuery($numRows);
 
 			if ($this->_autoClass)
