@@ -369,7 +369,7 @@
 				if (strtolower(str_replace(' ', '', $prop)) == 'rand()'){
 					$this->_query .= 'rand(), ';
 				}
-				else $this->_query .= "$prop $value, ";
+				else $this->_query .= $this->_escapeSqlKeyword($prop)." $value, ";
 			}
 
 			$this->_query = rtrim($this->_query, ', ');
