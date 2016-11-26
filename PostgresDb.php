@@ -230,7 +230,7 @@
 		}
 
 		protected function _escapeSqlKeyword($word){
-			if (in_array(strtolower($word),array('user','update','create','select','from','insert','into','group','having')))
+			if (in_array(strtolower($word),array('user','update','create','select','from','insert','into','group','having','order')))
 				$word = "\"$word\"";
 			return  $word;
 		}
