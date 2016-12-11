@@ -643,7 +643,7 @@
 			else {
 				if (!is_array($columns))
 					$columns = explode(',', $columns);
-				$columns = array_map(array($this,'_escapeSqlKeyword'), $columns);
+				$columns = array_map(array($this,'_escapeSqlKeyword'), array_map('trim',$columns));
 				$columns = implode(', ', $columns);
 			}
 
