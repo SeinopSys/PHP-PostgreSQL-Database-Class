@@ -386,6 +386,7 @@
 		 * @return boolean Boolean indicating whether the insert query was completed succesfully.
 		 */
 		private function _buildInsert($tableName, $insertData, $operation, $returnColumn = null){
+			$this->_tableName = $tableName;
 			$tableName = $this->_escapeTableName($tableName);
 			$this->_query = "$operation INTO $tableName";
 			if (!empty($returnColumn)){
@@ -647,8 +648,8 @@
 				$columns = implode(', ', $columns);
 			}
 
-			$tableName = $this->_escapeTableName($tableName);
-			$this->_query = "SELECT $columns FROM $tableName";
+			$table = $this->_escapeTableName($tableName);
+			$this->_query = "SELECT $columns FROM $table";
 			$stmt = $this->_buildQuery($numRows);
 
 			if ($this->_autoClass)
@@ -853,7 +854,7 @@
 		 * @return string
 		 */
 		protected function _escapeTableName($tableName){
-			return preg_replace('~^"?([a-zA-Z\d_\-]+)"?\s+([a-zA-Z\d]+)$~', '"$1" $2', trim($tableName));
+			return preg_replace('~^"?([a-zA-Z\d_\-]+)"?(?:\s+([a-zA-Z\d]+))?$~', '"$1" $2', trim($tableName));
 		}
 
 		/**
