@@ -386,7 +386,8 @@
 		 * @return boolean Boolean indicating whether the insert query was completed succesfully.
 		 */
 		private function _buildInsert($tableName, $insertData, $operation, $returnColumn = null){
-			$this->_tableName = $tableName;
+			if ($this->_autoClass)
+				$this->_tableName = $tableName;
 			$tableName = $this->_escapeTableName($tableName);
 			$this->_query = "$operation INTO $tableName";
 			if (!empty($returnColumn)){
@@ -720,6 +721,7 @@
 		 * @return boolean Boolean indicating whether the insert query was completed succesfully.
 		 */
 		public function insert($tableName, $insertData, $returnColumn = null){
+			$this->disableAutoClass();
 			return $this->_buildInsert($tableName, $insertData, 'INSERT', $returnColumn);
 		}
 
