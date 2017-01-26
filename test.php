@@ -54,6 +54,8 @@
 		'DELETE_WHERE_NOT_DELETING' => 0xA00,
 		'DELETE_WHERE_DELETING_WRONG_ROWS' => 0xA01,
 		'DELETE_NOT_DELETING' => 0xA02,
+
+		'JOIN_QUERY_MISMATCH' => 0xB00,
 	);
 
 	function fail($exitkey){
@@ -99,25 +101,25 @@
 	# get() Checks
 	// Regular call
 	$Users = $Database->get('users');
-	checkQuery('SELECT * FROM users', 'GET_QUERY_MISMATCH');
+	checkQuery('SELECT * FROM "users"', 'GET_QUERY_MISMATCH');
 	if (!is_array($Users)){
 		var_dump($Users);
 		fail('GET_RETURNING_WRONG_DATA');
 	}
 	// Check get with limit
 	$Users = $Database->get('users',1);
-	checkQuery('SELECT * FROM users LIMIT 1', 'GET_QUERY_LIMIT_MISMATCH');
+	checkQuery('SELECT * FROM "users" LIMIT 1', 'GET_QUERY_LIMIT_MISMATCH');
 	// Check get with array limit
 	$Users = $Database->get('users',array(10,2));
-	checkQuery('SELECT * FROM users LIMIT 2 OFFSET 10', 'GET_QUERY_ARRAY_LIMIT_MISMATCH');
+	checkQuery('SELECT * FROM "users" LIMIT 2 OFFSET 10', 'GET_QUERY_ARRAY_LIMIT_MISMATCH');
 	// Check get with column(s)
 	$Users = $Database->get('users',null,'id');
-	checkQuery('SELECT id FROM users', 'GET_QUERY_COLUMNS_MISMATCH');
+	checkQuery('SELECT id FROM "users"', 'GET_QUERY_COLUMNS_MISMATCH');
 
 	# count() Checks
 	// Call
 	$Count = $Database->count('users');
-	checkQuery('SELECT COUNT(*)::int as c FROM users LIMIT 1', 'COUNT_QUERY_MISMATCH');
+	checkQuery('SELECT COUNT(*)::int as c FROM "users" LIMIT 1', 'COUNT_QUERY_MISMATCH');
 	if (!is_int($Count))
 		fail('COUNT_RETURNING_WRONG_DATA_TYPE');
 	if ($Count !== 0)
@@ -133,7 +135,7 @@
 
 	# insert() Checks
 	$Database->insert('users',array('name' => 'David'));
-	checkQuery('INSERT INTO users ("name")  VALUES (\'David\')', 'INSERT_QUERY_MISMATCH');
+	checkQuery('INSERT INTO "users" ("name") VALUES (\'David\')', 'INSERT_QUERY_MISMATCH');
 
 	# get() format checks
 	$Users = $Database->get('users');
@@ -150,14 +152,14 @@
 
 	// Check insert with returning integer
 	$id = $Database->insert('users',array('name' => 'Jon'), 'id');
-	checkQuery('INSERT INTO users ("name")  VALUES (\'Jon\') RETURNING "id"', 'INSERT_QUERY_MISMATCH');
+	checkQuery('INSERT INTO "users" ("name") VALUES (\'Jon\') RETURNING "id"', 'INSERT_QUERY_MISMATCH');
 	if (!is_int($id))
 		fail('INSERT_RETURN_WRONG_DATA_TYPE_INT');
 	if ($id !== 2)
 		fail('INSERT_RETURN_WRONG_DATA');
 	// Check insert with returning string
 	$name = $Database->insert('users',array('name' => 'Anna'), 'name');
-	checkQuery('INSERT INTO users ("name")  VALUES (\'Anna\') RETURNING "name"', 'INSERT_QUERY_MISMATCH');
+	checkQuery('INSERT INTO "users" ("name") VALUES (\'Anna\') RETURNING "name"', 'INSERT_QUERY_MISMATCH');
 	if (!is_string($name))
 		fail('INSERT_RETURN_WRONG_DATA_TYPE_STRING');
 	if ($name !== 'Anna')
@@ -166,7 +168,7 @@
 	# where() Checks
 	// Generic use
 	$Id1 = $Database->where('id', 1)->get('users');
-	checkQuery('SELECT * FROM users WHERE "id" = 1', 'WHERE_QUERY_MISMATCH');
+	checkQuery('SELECT * FROM "users" WHERE "id" = 1', 'WHERE_QUERY_MISMATCH');
 	if (empty($Id1) || !isset($Id1[0]['id']))
 		fail('WHERE_RETURNING_WRONG_DATA');
 	if ($Id1[0]['id'] !== 1)
@@ -175,14 +177,14 @@
 		fail('WHERE_RETURNING_WRONG_DATA_TYPE_STRING');
 	// String check
 	$Id1 = $Database->where('"id" = 1')->get('users');
-	checkQuery('SELECT * FROM users WHERE "id" = 1', 'WHERE_QUERY_STRING_MISMATCH');
+	checkQuery('SELECT * FROM "users" WHERE "id" = 1', 'WHERE_QUERY_STRING_MISMATCH');
 	if (empty($Id1) || !isset($Id1[0]['id']) || $Id1[0]['id'] != 1)
 		fail('WHERE_RETURNING_WRONG_DATA');
 	if (!is_int($Id1[0]['id']))
 		fail('WHERE_RETURNING_WRONG_DATA_TYPE_INT');
 	// Array check
 	$Id1 = $Database->where('id',array('=' => 1))->get('users');
-	checkQuery('SELECT * FROM users WHERE "id" = 1', 'WHERE_QUERY_ARRAY_MISMATCH');
+	checkQuery('SELECT * FROM "users" WHERE "id" = 1', 'WHERE_QUERY_ARRAY_MISMATCH');
 	if (empty($Id1) || !isset($Id1[0]['id']) || $Id1[0]['id'] != 1)
 		fail('WHERE_RETURNING_WRONG_DATA');
 	if (!is_int($Id1[0]['id']))
@@ -191,7 +193,7 @@
 	# getOne() Checks
 	// Generic call
 	$FirstUser = $Database->where('id', 1)->getOne('users');
-	checkQuery('SELECT * FROM users WHERE "id" = 1 LIMIT 1', 'GETONE_QUERY_MISMATCH');
+	checkQuery('SELECT * FROM "users" WHERE "id" = 1 LIMIT 1', 'GETONE_QUERY_MISMATCH');
 	if (isset($FirstUser[0]) && is_array($FirstUser[0]))
 		fail('GETONE_RETURNING_WRONG_STRUCTURE');
 	if ($FirstUser['id'] != 1)
@@ -202,7 +204,7 @@
 		fail('GETONE_RETURNING_WRONG_DATA_TYPE_STRING');
 	// Columns
 	$FirstUser = $Database->where('id', 1)->getOne('users','id, name');
-	checkQuery('SELECT id, name FROM users WHERE "id" = 1 LIMIT 1', 'GETONE_QUERY_COLUMN_MISMATCH');
+	checkQuery('SELECT id, name FROM "users" WHERE "id" = 1 LIMIT 1', 'GETONE_QUERY_COLUMN_MISMATCH');
 	if ($FirstUser['id'] != 1)
 		fail('GETONE_RETURNING_COLUMN_WRONG_DATA');
 	if (!is_int($FirstUser['id']))
@@ -213,7 +215,7 @@
 	# orderBy() Checks
 	// Generic call
 	$LastUser = $Database->orderBy('id','DESC')->getOne('users');
-	checkQuery('SELECT * FROM users ORDER BY id DESC LIMIT 1','ORDERBY_QUERY_MISMATCH');
+	checkQuery('SELECT * FROM "users" ORDER BY id DESC LIMIT 1','ORDERBY_QUERY_MISMATCH');
 	if (!isset($LastUser['id']))
 		fail('ORDERBY_RETURNING_WRONG_DATA');
 	if ($LastUser['id'] != 3)
@@ -225,22 +227,22 @@
 
 	# rawQuery() Checks
 	// No bound parameteres
-	$FirstTwoUsers = $Database->rawQuery('SELECT * FROM users WHERE id <= 2');
-	checkQuery('SELECT * FROM users WHERE id <= 2','RAWQUERY_QUERY_MISMATCH');
+	$FirstTwoUsers = $Database->rawQuery('SELECT * FROM "users" WHERE id <= 2');
+	checkQuery('SELECT * FROM "users" WHERE id <= 2','RAWQUERY_QUERY_MISMATCH');
 	if (!is_array($FirstTwoUsers))
 		fail('RAWQUERY_RETURNING_WRONG_DATA');
 	if (count($FirstTwoUsers) !== 2)
 		fail('RAWQUERY_RETURNING_WRONG_DATA');
 	// Bound parameteres
-	$FirstTwoUsers = $Database->rawQuery('SELECT * FROM users WHERE id <= ?', array(2));
-	checkQuery('SELECT * FROM users WHERE id <= 2','RAWQUERY_QUERY_MISMATCH');
+	$FirstTwoUsers = $Database->rawQuery('SELECT * FROM "users" WHERE id <= ?', array(2));
+	checkQuery('SELECT * FROM "users" WHERE id <= 2','RAWQUERY_QUERY_MISMATCH');
 	if (!is_array($FirstTwoUsers))
 		fail('RAWQUERY_RETURNING_WRONG_DATA');
 	if (count($FirstTwoUsers) !== 2)
 		fail('RAWQUERY_RETURNING_WRONG_DATA');
 
 	# getLastError Check
-	$Insert = @$Database->insert('users',array('id' => '1', 'name' => 'Sam'));
+	$Insert = @$Database->insert('users',array('id' => 1, 'name' => 'Sam'));
 	if ($Insert !== false)
 		fail('INSERT_DUPE_PRIMARY_KEY_NOT_RECOGNIZED');
 	if (strpos($Database->getLastError(), 'duplicate key value violates unique constraint') === false)
@@ -273,3 +275,9 @@
 	$Database->delete('users');
 	if ($Database->has('users'))
 		fail('DELETE_NOT_DELETING');
+
+	# join() Checks
+	$Database->rawQuery('CREATE TABLE "userdata" (id serial NOT NULL, somevalue integer)');
+	$Database->insert('userdata',[ 'somevalue' => 1 ]);
+	$Database->join('userdata','userdata.id = users.id','LEFT')->where('users.id',1)->get('users',null,'users.*');
+	checkQuery('SELECT users.* FROM "users" LEFT JOIN "userdata" ON userdata.id = users.id WHERE users.id = 1','JOIN_QUERY_MISMATCH');

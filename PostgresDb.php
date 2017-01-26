@@ -199,15 +199,15 @@
 		 * Helper function to add variables into bind parameters array and will return
 		 * its SQL part of the query according to operator in ' $operator ?'
 		 *
-		 * @param array $operator Variable with values
-		 * @param       $value
+		 * @param string $operator
+		 * @param        $value
 		 *
 		 * @return string
 		 */
 		protected function _buildPair($operator, $value){
 			$this->_bindParam($value);
 
-			return ' '.$operator.' ? ';
+			return " $operator ? ";
 		}
 
 		/**
@@ -221,7 +221,7 @@
 			foreach ($this->_join as $data){
 				list ($joinType, $joinTable, $joinCondition) = $data;
 
-				$this->_query .= " $joinType JOIN ".$this->_escapeTableName($joinTable)." on $joinCondition";
+				$this->_query = rtrim($this->_query)." $joinType JOIN ".$this->_escapeTableName($joinTable)." ON $joinCondition";
 			}
 		}
 
@@ -327,7 +327,7 @@
 			$isInsert = preg_match('/^[INSERT|REPLACE]/', $this->_query);
 			$dataColumns = array_keys($tableData);
 			if ($isInsert){
-				$this->_query .= ' ("'.implode($dataColumns, '", "').'")  VALUES (';
+				$this->_query .= ' ("'.implode($dataColumns, '", "').'") VALUES (';
 			}
 			else $this->_query .= " SET ";
 
@@ -784,7 +784,7 @@
 		/**
 		 * Method to check if a table exists
 		 *
-		 * @param array $table Table name to check
+		 * @param string $table Table name to check
 		 *
 		 * @returns boolean True if table exists
 		 */
@@ -856,7 +856,7 @@
 		 * @return string
 		 */
 		protected function _escapeTableName($tableName){
-			return preg_replace('~^"?([a-zA-Z\d_\-]+)"?(?:\s+([a-zA-Z\d]+))?$~', '"$1" $2', trim($tableName));
+			return preg_replace('~^"?([a-zA-Z\d_\-]+)"?(?:\s*(\s[a-zA-Z\d]+))?$~', '"$1"$2', trim($tableName));
 		}
 
 		/**
