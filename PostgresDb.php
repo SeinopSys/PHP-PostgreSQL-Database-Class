@@ -714,7 +714,7 @@
 		/**
 		 * Insert method to add new row
 		 *
-		 * @param <string $tableName The name of the table.
+		 * @param string $tableName The name of the table.
 		 * @param array       $insertData   Data containing information for inserting into the DB.
 		 * @param string|null $returnColumn Which column to return
 		 *
