@@ -899,7 +899,7 @@
 		public function tableNameToClassName($namespaced = false){
 			$className = $this->_tableName;
 			if (isset($this->_tableName)){
-				$className = preg_replace('/s(_|$)/','$1',preg_replace('/ies$/','y',preg_replace_callback('/(?:^|-)([a-z])/',function($match){
+				$className = preg_replace('/s(_|$)/','$1',preg_replace('/ies([-_]|$)/','y$1',preg_replace_callback('/(?:^|-)([a-z])/',function($match){
 					return strtoupper($match[1]);
 				},$className)));
 				$append = $namespaced?'\\':'';
