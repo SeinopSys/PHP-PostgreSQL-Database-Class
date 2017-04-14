@@ -12,7 +12,7 @@ Place `PostgresDb.php` in your project and require/include it.
 
 ### Composer
 
-	composer require seinopsys/postgresql-database-class:^1.0
+    composer require seinopsys/postgresql-database-class:^1.0
 
 ## Usage
 
@@ -84,7 +84,7 @@ array(
     array(
         'id' => 3,
         'name' => 'Daniel'
-	)
+    )
 )
 ```
 
@@ -250,7 +250,7 @@ array(
 ```php
 $withWhere = $Database->where('"id" = 2');
 if ($withWhere->has('users'))
-	$Database->getOne('users');
+    $Database->getOne('users');
 ```
 
 Instead of returning the user with the `id` equal to `2`, it'll return whatever row it finds first since the `where` call is no longer in effect.
@@ -333,20 +333,20 @@ class PostgresDbWrapper extends PostgresDb {
      *
      * @return bool|array|object[]
      */
-	protected function _execStatement($stmt){
-		$className = $this->tableNameToClassName();
-		if (isset($className) && empty($this->_nonexistantClassCache[$className])){
-			try {
-				if (!class_exists("\\DB\\$className"))
-					throw new Exception();
+    protected function _execStatement($stmt){
+        $className = $this->tableNameToClassName();
+        if (isset($className) && empty($this->_nonexistantClassCache[$className])){
+            try {
+                if (!class_exists("\\DB\\$className"))
+                    throw new Exception();
 
-				$this->setClass("\\DB\\$className");
-			}
-			catch (Exception $e){ $this->_nonexistantClassCache[$className] = true; }
-		}
+                $this->setClass("\\DB\\$className");
+            }
+            catch (Exception $e){ $this->_nonexistantClassCache[$className] = true; }
+        }
 
-		$this->query_count++;
-		return parent::_execStatement($stmt);
-	}
+        $this->query_count++;
+        return parent::_execStatement($stmt);
+    }
 }
 ```
