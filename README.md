@@ -12,7 +12,7 @@ Place `PostgresDb.php` in your project and require/include it.
 
 ### Composer
 
-    composer require seinopsys/postgresql-database-class:dev-master
+	composer require seinopsys/postgresql-database-class:^1.0
 
 ## Usage
 
