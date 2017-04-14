@@ -1,4 +1,4 @@
-<h1>PostgresDb <a href="https://travis-ci.org/SeinopSys/PHP-PostgreSQL-Database-Class"><img alt="Build Status" src="https://travis-ci.org/SeinopSys/PHP-PostgreSQL-Database-Class.svg"></a></h1>
+# PostgresDb [![Build Status](https://travis-ci.org/SeinopSys/PHP-PostgreSQL-Database-Class.svg)](https://travis-ci.org/SeinopSys/PHP-PostgreSQL-Database-Class) [![Latest Stable Version](https://poser.pugx.org/seinopsys/postgresql-database-class/v/stable)](https://packagist.org/packages/seinopsys/postgresql-database-class) [![Total Downloads](https://poser.pugx.org/seinopsys/postgresql-database-class/downloads)](https://packagist.org/packages/seinopsys/postgresql-database-class) [![License](https://poser.pugx.org/seinopsys/postgresql-database-class/license)](https://packagist.org/packages/seinopsys/postgresql-database-class)
 
 This project is a PostgreSQL version of @joshcam's [MysqliDb Class](https://github.com/joshcam/PHP-MySQLi-Database-Class), that has support for the basic functionality and syntax provided by said class, tailored specifically to PostgreSQL.
 
