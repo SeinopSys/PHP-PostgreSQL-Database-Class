@@ -119,6 +119,8 @@
 			 */
 			$_errmode = PDO::ERRMODE_WARNING;
 
+		const ORDERBY_RAND = 'rand()';
+
 		public function __construct($db, $host = DB_HOST, $user = DB_USER, $pass = DB_PASS){
 			$this->_connstr = "pgsql:host=$host user=$user password=$pass dbname=$db options='--client_encoding=UTF8'";
 		}
@@ -383,12 +385,7 @@
 				return;
 			}
 
-			$this->_query .= " GROUP BY ";
-			foreach ($this->_groupBy as $value){
-				$this->_query .= "$value, ";
-			}
-
-			$this->_query = rtrim($this->_query, ', ').' ';
+			$this->_query .= ' GROUP BY "'.implode('", "', $this->_groupBy).'"';
 		}
 
 		/**
@@ -402,7 +399,7 @@
 
 			$this->_query .= " ORDER BY ";
 			foreach ($this->_orderBy as $prop => $value){
-				if (strtolower(str_replace(' ', '', $prop)) == 'rand()'){
+				if ($prop === self::ORDERBY_RAND){
 					$this->_query .= 'rand(), ';
 				}
 				else $this->_query .= $this->_escapeSqlKeyword($prop)." $value, ";
@@ -558,7 +555,7 @@
 		 * @return int
 		 */
 		public function count($table){
-			return $this->disableAutoClass()->getOne($table, 'COUNT(*)::int as c')['c'];
+			return $this->disableAutoClass()->getOne($table, 'COUNT(*) as cnt')['cnt'];
 		}
 
 		/**
@@ -587,31 +584,6 @@
 		}
 
 		/**
-		 * Sets a class to be used as the PDO::fetchAll argument
-		 *
-		 * @param object|string $class
-		 *
-		 * @return self
-		 */
-		public function setClass($class){
-			$this->_fetchType = PDO::FETCH_CLASS;
-			$this->_fetchArg = $class;
-
-			return $this;
-		}
-
-		/**
-		 * Disabled the tableNameToClassName method
-		 *
-		 * @return self
-		 */
-		public function disableAutoClass(){
-			$this->_autoClass = false;
-
-			return $this;
-		}
-
-		/**
 		 * This method allows you to specify multiple (method chaining optional) OR WHERE statements for SQL queries.
 		 *
 		 * @uses $db->orWhere('id', 7)->orWhere('title', 'MyTitle');
@@ -624,6 +596,12 @@
 		 */
 		public function orWhere($whereProp, $whereValue = 'DBNULL', $operator = '='){
 			return $this->where($whereProp, $whereValue, $operator, 'OR');
+		}
+
+		public function groupBy($groupByField){
+			$groupByField = preg_replace('/[^-a-z0-9\.\(\),_"\*]+/i', '', $groupByField);
+			$this->_groupBy[] = $groupByField;
+            return $this;
 		}
 
 		/**
@@ -831,12 +809,49 @@
 		}
 
 		/**
+		 * Sets a class to be used as the PDO::fetchAll argument
+		 *
+		 * @param object|string $class
+		 *
+		 * @return self
+		 */
+		public function setClass($class){
+			$this->_fetchType = PDO::FETCH_CLASS;
+			$this->_fetchArg = $class;
+
+			return $this;
+		}
+
+		/**
+		 * Disabled the tableNameToClassName method
+		 *
+		 * @return self
+		 */
+		public function disableAutoClass(){
+			$this->_autoClass = false;
+
+			return $this;
+		}
+
+		/**
 		 * @param PDOStatement $stmt Statement to execute
 		 *
 		 * @return bool|array|object[]
+		 * @throws PDOException
 		 */
 		protected function _execStatement($stmt){
-			$success = $stmt->execute($this->_bindParams);
+			$this->_lastQuery = isset($this->_bindParams)
+				? $this->_replacePlaceHolders($this->_query, $this->_bindParams)
+				: $this->_query;
+
+			try {
+				$success = $stmt->execute($this->_bindParams);
+			}
+			catch (PDOException $e){
+				$this->_stmtError = $e->getMessage();
+				$this->reset();
+				throw $e;
+			}
 
 			if ($success !== true){
 				$errInfo = $stmt->errorInfo();
@@ -851,9 +866,6 @@
 					$result = $stmt->fetchAll($this->_fetchType, $this->_fetchArg);
 				else $result = $stmt->fetchAll($this->_fetchType);
 			}
-			$this->_lastQuery = isset($this->_bindParams)
-				? $this->_replacePlaceHolders($this->_query, $this->_bindParams)
-				: $this->_query;
 			$this->reset();
 
 			return $result;

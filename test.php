@@ -59,6 +59,9 @@
 
 		'PDO_ERRMODE_UNCHANGED_PRECONN' => 0xC00,
 		'PDO_ERRMODE_UNCHANGED_POSTCONN' => 0xC01,
+
+		'GROUPBY_QUERY_MISMATCH' => 0xD00,
+		'GROUPBY_RETURNING_WRONG_DATA' => 0xD01,
 	);
 
 	function fail($exitkey){
@@ -81,8 +84,7 @@
 
 		$LastQuery = $Database->getLastQuery();
 		if ($expect !== $LastQuery){
-			echo "Mismatched query string:\n";
-			var_dump($LastQuery);
+			echo "Mismatched query string\nExpected: ".var_export($expect, true)."\n     Got: ".var_export($LastQuery, true)."\n";
 			fail($exitkey);
 		}
 	}
@@ -95,7 +97,7 @@
 	catch (Exception $e){
 		fail('TESTDB_CONNECTION_ERROR');
 	}
-	$Database->rawQuery('CREATE TABLE "users" (id serial NOT NULL, name character varying(10))');
+	$Database->rawQuery('CREATE TABLE "users" (id serial NOT NULL, name character varying(10), gender character(1) NOT NULL)');
 	if ($Database->tableExists('users') !== true)
 		fail('TABLEEXISTS_NOT_TRUE');
 	// Add PRIMARY KEY constraint
@@ -119,12 +121,12 @@
 	$Users = $Database->get('users',null,'id');
 	checkQuery('SELECT id FROM "users"', 'GET_QUERY_COLUMNS_MISMATCH');
 
-	# check PDO eroormode setting
+	# check PDO errormode setting
 	$Database->setPDOErrmode(PDO::ERRMODE_EXCEPTION);
 	$caught = false;
 	try {
 		// There's no email column so we should get an exception
-		$Database->get('users','email',1);
+		$Database->getOne('users','email');
 	}
 	catch (PDOException $e){
 		$caught = true;
@@ -135,7 +137,7 @@
 	# count() Checks
 	// Call
 	$Count = $Database->count('users');
-	checkQuery('SELECT COUNT(*)::int as c FROM "users" LIMIT 1', 'COUNT_QUERY_MISMATCH');
+	checkQuery('SELECT COUNT(*) as cnt FROM "users" LIMIT 1', 'COUNT_QUERY_MISMATCH');
 	if (!is_int($Count))
 		fail('COUNT_RETURNING_WRONG_DATA_TYPE');
 	if ($Count !== 0)
@@ -150,8 +152,8 @@
 		fail('HAS_RETURNING_WRONG_DATA');
 
 	# insert() Checks
-	$Database->insert('users',array('name' => 'David'));
-	checkQuery('INSERT INTO "users" ("name") VALUES (\'David\')', 'INSERT_QUERY_MISMATCH');
+	$Database->insert('users',array('name' => 'David', 'gender' => 'm'));
+	checkQuery('INSERT INTO "users" ("name", "gender") VALUES (\'David\', \'m\')', 'INSERT_QUERY_MISMATCH');
 
 	# get() format checks
 	$Users = $Database->get('users');
@@ -167,15 +169,15 @@
 		fail('GET_RETURN_WRONG_RESULT_TYPE_INT');
 
 	// Check insert with returning integer
-	$id = $Database->insert('users',array('name' => 'Jon'), 'id');
-	checkQuery('INSERT INTO "users" ("name") VALUES (\'Jon\') RETURNING "id"', 'INSERT_QUERY_MISMATCH');
+	$id = $Database->insert('users',array('name' => 'Jon', 'gender' => 'm'), 'id');
+	checkQuery('INSERT INTO "users" ("name", "gender") VALUES (\'Jon\', \'m\') RETURNING "id"', 'INSERT_QUERY_MISMATCH');
 	if (!is_int($id))
 		fail('INSERT_RETURN_WRONG_DATA_TYPE_INT');
 	if ($id !== 2)
 		fail('INSERT_RETURN_WRONG_DATA');
 	// Check insert with returning string
-	$name = $Database->insert('users',array('name' => 'Anna'), 'name');
-	checkQuery('INSERT INTO "users" ("name") VALUES (\'Anna\') RETURNING "name"', 'INSERT_QUERY_MISMATCH');
+	$name = $Database->insert('users',array('name' => 'Anna', 'gender' => 'f'), 'name');
+	checkQuery('INSERT INTO "users" ("name", "gender") VALUES (\'Anna\', \'f\') RETURNING "name"', 'INSERT_QUERY_MISMATCH');
 	if (!is_string($name))
 		fail('INSERT_RETURN_WRONG_DATA_TYPE_STRING');
 	if ($name !== 'Anna')
@@ -241,6 +243,15 @@
 	if (!is_string($LastUser['name']))
 		fail('ORDERBY_RETURNING_WRONG_DATA_TYPE_STRING');
 
+	# groupBy() Checks
+	// Generic call
+	$GenderCount = $Database->groupBy('gender')->orderBy('cnt','DESC')->get('users',null,'gender, COUNT(*) as cnt');
+	checkQuery('SELECT gender, COUNT(*) as cnt FROM "users" GROUP BY "gender" ORDER BY cnt DESC','GROUPBY_QUERY_MISMATCH');
+	if (!isset($GenderCount[0]['cnt']) || !isset($GenderCount[1]['cnt']) || !isset($GenderCount[0]['gender']) || !isset($GenderCount[1]['gender']))
+		fail('GROUPBY_RETURNING_WRONG_DATA');
+	if ($GenderCount[0]['cnt'] !== 2 || $GenderCount[1]['cnt'] !== 1 || $GenderCount[0]['gender'] !== 'm' || $GenderCount[1]['gender'] !== 'f')
+		fail('GROUPBY_RETURNING_WRONG_DATA');
+
 	# rawQuery() Checks
 	// No bound parameteres
 	$FirstTwoUsers = $Database->rawQuery('SELECT * FROM "users" WHERE id <= 2');
@@ -258,17 +269,22 @@
 		fail('RAWQUERY_RETURNING_WRONG_DATA');
 
 	# getLastError Check
-	$Insert = @$Database->insert('users',array('id' => 1, 'name' => 'Sam'));
-	if ($Insert !== false)
+	$caught = false;
+	try {
+		// An entry with an id of 1 already exists, we should get an excpetion
+		$Insert = @$Database->insert('users',array('id' => 1, 'name' => 'Sam', 'gender' => 'm'));
+	}
+	catch (PDOException $e){
+		$caught = true;
+	}
+	if (!$caught)
 		fail('INSERT_DUPE_PRIMARY_KEY_NOT_RECOGNIZED');
 	if (strpos($Database->getLastError(), 'duplicate key value violates unique constraint') === false)
 		fail('INSERT_DUPE_PRIMARY_KEY_WRONG_ERROR_MSG');
 
-	# count() Checks
+	# count() Re-check
 	// Call
 	$Count = $Database->count('users');
-	if (!is_int($Count))
-		fail('COUNT_RETURNING_WRONG_DATA_TYPE');
 	if ($Count !== 3)
 		fail('COUNT_RETURNING_WRONG_DATA');
 

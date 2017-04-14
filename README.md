@@ -18,11 +18,11 @@ Place `PostgresDb.php` in your project and require/include it.
 
 For the examples below, the following `users` table structure is used:
 
-| id |  name  |
-|----|--------|
-| 1  | Sam    |
-| 2  | Alex   |
-| 3  | Daniel |
+| id |  name  | gender |
+|----|--------|--------|
+| 1  | Sam    | m      |
+| 2  | Alex   | f      |
+| 3  | Daniel | m      |
 
 
 ### Connecting to a database
@@ -125,12 +125,15 @@ $Database->where('id', 1, '!=')->get('users');
 
 ```php
 // SELECT * FROM users u LEFT JOIN "messages" m ON m.user = u.id
-$Database->join('messages m', 'm.user = u.id','LEFT')->get('users u');
+$Database->join('messages m', 'm.user = u.id', 'LEFT')->get('users u');
+
+// SELECT * FROM users u INNER JOIN "messages" m ON u.id = m.user
+$Database->join('messages m', 'u.id = m.user', 'INNER')->get('users u');
 ```
 
 ### Ordering [`orderBy()`, `orderByLiteral()`]
 
-Complex `ORDER BY` statements can be passed to `orderByLiteral` which will just use the value you provide as it is.
+Complex `ORDER BY` statements can be passed to `orderByLiteral` which will just use the value you provide as it is. you can use the built-in constant to order the results randomly.
 
 ```php
 // SELECT * FROM users ORDER BY "name" DESC
@@ -139,11 +142,23 @@ $Database->orderBy('name')->get('users');
 // SELECT * FROM users ORDER BY "name" ASC
 $Database->orderBy('name','ASC')->get('users');
 
+// SELECT * FROM users ORDER BY rand()
+$Database->orderBy(PostgresDb::ORDERBY_RAND)->get('users');
+
 // SELECT * FROM users ORDER BY CASE WHEN "name" IS NULL THEN 1 ELSE 0 END DESC, "name" ASC
 $Database
     ->orderByLiteral('CASE WHEN "name" IS NULL THEN 1 ELSE 0 END')
     ->orderBy('name','ASC')
     ->get('users');
+```
+
+### Grouping [`groupBy()`]
+
+```php
+// SELECT * FROM "users" GROUP BY "gender"
+$Database->groupBy('gender')->get('users');
+// SELECT * FROM "users" GROUP BY "gender", "othercol"
+$Database->groupBy('gender')->groupBy('othercol')->get('users');
 ```
 
 ### Inserting [`insert()`]
@@ -188,7 +203,7 @@ $Database->where('id', 1)->update('users',array('name' => 'Dave'));
 
 ### Raw SQL queries [`rawQuery()`]
 
-Executes the query exactly* as passed, for when it is far too complex to use the built-in methods. Return values match `get`'s.<br><sub>*`&&` is replaced with `AND` for MySQL compatibility</sub>
+Executes the query exactly* as passed, for when it is far too complex to use the built-in methods, or when a built-in method does not exist for what you want to achieve. Return value format matches `get()`'s.<br><sub>*`&&` is replaced with `AND` for MySQL compatibility</sub>
 
 ```php
 // Query string only
