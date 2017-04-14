@@ -345,7 +345,6 @@ class PostgresDbWrapper extends PostgresDb {
             catch (Exception $e){ $this->_nonexistantClassCache[$className] = true; }
         }
 
-        $this->query_count++;
         return parent::_execStatement($stmt);
     }
 }
