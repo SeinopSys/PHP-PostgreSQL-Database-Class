@@ -240,20 +240,20 @@ if ($withWhere->has('users'))
 
 Instead of returning the user with the `id` equal to `2`, it'll return whatever row it finds first since the `where` call is no longer in effect.
 
-#### Check if a table exists [`tableExists()::boolean`]
+#### Check if a table exists [`tableExists():boolean`]
 
 ```php
 $Database->tableExists('users'); // true
 ```
 
-#### Get number of matching rows [`count()::int`]
+#### Get number of matching rows [`count():int`]
 
 ```php
 $Database->count('users'); // 4
 $Database->where('"id" = 2')->count('users'); // 1
 ```
 
-#### Check if the query returns any rows [`has()::boolean`]
+#### Check if the query returns any rows [`has():boolean`]
 
 ```php
 $Database->has('users'); // true
@@ -262,7 +262,7 @@ $Database->where('"id" = 2')->has('users'); // true
 
 ### Debugging
 
-#### Get last executed query [`getLastQuery()::string`]
+#### Get last executed query [`getLastQuery():string`]
 
 This will return the last query executed through the class with the bound value placeholders replaced with actual values. Executing this query will most likely fail because quotation marks aren't added around strings when replacing.
 
@@ -271,7 +271,7 @@ $Database->insert('users',array('name' => 'Sarah'))
 echo $Database->getLastQuery(); // INSERT INTO "users" ("name") VALUES ('Sarah')
 ```
 
-#### Get last error message [`getLastError()::string`]
+#### Get last error message [`getLastError():string`]
 
 This can be useful after a failed `insert`/`update` call, for example.
 
@@ -305,7 +305,7 @@ class PostgresDbWrapper extends PostgresDb {
 
 ### Object return values
 
-The script contains two utility methods (`tableNameToClassName` and `setClass`) which allow for the creation of a wrapper that can force returned values into a class instead of an array. This allows for using both the array and class method simultaneously with minimal effort. And example of such a wrapper class is shown below.
+The script contains two utility methods (`tableNameToClassName` and `setClass`) which allow for the creation of a wrapper that can force returned values into a class instead of an array. This allows for using both the array and class method simultaneously with minimal effort. An example of such a wrapper class is shown below.
 
 This assumes an autoloader is configured within the project which allows classes to be loaded on the fly as needed. This method will cause the autoloader to attempt loading the class within the `DB` namespace when `class_exists` is called. If it fails, a key is set on a private array. This prevents future checks for the existence of the same class, which could otherwise impact the application's performace.
 
