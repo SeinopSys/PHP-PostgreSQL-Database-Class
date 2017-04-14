@@ -110,13 +110,24 @@
 			 */
 			$_connstr;
 
+		private
+			/**
+			 * Error mode for the connection
+			 * Defaults to
+			 *
+			 * @var int
+			 */
+			$_errmode = PDO::ERRMODE_WARNING;
+
 		public function __construct($db, $host = DB_HOST, $user = DB_USER, $pass = DB_PASS){
 			$this->_connstr = "pgsql:host=$host user=$user password=$pass dbname=$db options='--client_encoding=UTF8'";
 		}
 
 		protected function _connect(){
 			$this->_conn = new PDO($this->_connstr);
-			$this->_conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_WARNING);
+			// Force lower case column names, since PostgreSQL does not allow uppercase letters
+			$this->_conn->setAttribute(PDO::ATTR_CASE, PDO::CASE_LOWER);
+			$this->_conn->setAttribute(PDO::ATTR_ERRMODE, $this->_errmode);
 		}
 
 		/** @return PDO */
@@ -126,6 +137,31 @@
 			}
 
 			return $this->_conn;
+		}
+
+		/**
+		 * Set the error mode of the PDO instance
+		 * Expects a PDO::ERRMODE_* constant
+		 *
+		 * @param int
+		 *
+		 * @return self
+		 */
+		public function setPDOErrmode($errmode){
+			$this->_errmode = $errmode;
+			if ($this->_conn)
+				$this->_conn->setAttribute(PDO::ATTR_ERRMODE, $this->_errmode);
+
+			return $this;
+		}
+
+		/**
+		 * Returns the error mode of the PDO instance
+		 *
+		 * @return int
+		 */
+		public function getPDOErrmode(){
+			return $this->_errmode;
 		}
 
 		/**

@@ -56,6 +56,9 @@
 		'DELETE_NOT_DELETING' => 0xA02,
 
 		'JOIN_QUERY_MISMATCH' => 0xB00,
+
+		'PDO_ERRMODE_UNCHANGED_PRECONN' => 0xC00,
+		'PDO_ERRMODE_UNCHANGED_POSTCONN' => 0xC01,
 	);
 
 	function fail($exitkey){
@@ -115,6 +118,19 @@
 	// Check get with column(s)
 	$Users = $Database->get('users',null,'id');
 	checkQuery('SELECT id FROM "users"', 'GET_QUERY_COLUMNS_MISMATCH');
+
+	# check PDO eroormode setting
+	$Database->setPDOErrmode(PDO::ERRMODE_EXCEPTION);
+	$caught = false;
+	try {
+		// There's no email column so we should get an exception
+		$Database->get('users','email',1);
+	}
+	catch (PDOException $e){
+		$caught = true;
+	}
+	if (!$caught)
+		fail('PDO_ERRMODE_UNCHANGED_POSTCONN');
 
 	# count() Checks
 	// Call

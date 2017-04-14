@@ -27,7 +27,7 @@ For the examples below, the following `users` table structure is used:
 
 ### Connecting to a database
 
-To prepare a new instance of the class for use, simply construct it:
+To start using the class you need to create an instance with the following parameters:
 
 ```php
 require "PostgresDb.php";
@@ -40,7 +40,20 @@ By default, initializing the class does not immediately create a connection. To 
 $Database->pdo();
 ```
 
-This will create (and return) the PDO object used by the class and simultaneously connect to the database. Initial connection errors can be caught by using `try…catch` but the script uses `PDO::ERRMODE_WARNING` for further errors. If you'd prefer exceptions to be thrown instead, feel free to change this to `PDO::ERRMODE_EXCEPTION`.
+This will create (and return) the internal PDO object used by the class and simultaneously attempts to connect to the database. Initial connection errors can be caught by using `try…catch` but by default the script uses `PDO::ERRMODE_WARNING` for further errors.
+
+If you'd prefer exceptions to be thrown instead, or if you like to live dangerously and want to silecne the errors, you can use the chainable `setPDOErrmode()` method both before and after the connection has been made.
+
+```php
+// Before connection
+$Database->setPDOErrmode(PDO::ERRMODE_EXCEPTION)->pdo();
+
+// After connection
+$Database->pdo();
+$Database->setPDOErrmode(PDO::ERRMODE_SILENT)->get(…)->setPDOErrmode(PDO::ERRMODE_WARNING);
+```
+
+If you need the value later for whatever reason you can read it out using `getPDOErrmode()`.
 
 ### Selecting [`get()`, `getOne()`]
 
