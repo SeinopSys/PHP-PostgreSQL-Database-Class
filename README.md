@@ -42,7 +42,7 @@ $Database->pdo();
 
 This will create (and return) the internal PDO object used by the class and simultaneously attempts to connect to the database. Initial connection errors can be caught by using `try…catch` but by default the script uses `PDO::ERRMODE_WARNING` for further errors.
 
-If you'd prefer exceptions to be thrown instead, or if you like to live dangerously and want to silecne the errors, you can use the chainable `setPDOErrmode()` method both before and after the connection has been made.
+If you'd prefer exceptions to be thrown instead, or if you like to live dangerously and want to silence the errors, you can use the chainable `setPDOErrmode()` method both before and after the connection has been made.
 
 ```php
 // Before connection
