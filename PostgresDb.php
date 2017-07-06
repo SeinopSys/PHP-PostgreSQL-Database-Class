@@ -812,11 +812,12 @@
 		 * Sets a class to be used as the PDO::fetchAll argument
 		 *
 		 * @param object|string $class
+		 * @param int           $type
 		 *
 		 * @return self
 		 */
-		public function setClass($class){
-			$this->_fetchType = PDO::FETCH_CLASS;
+		public function setClass($class, $type = PDO::FETCH_CLASS){
+			$this->_fetchType = $type;
 			$this->_fetchArg = $class;
 
 			return $this;
