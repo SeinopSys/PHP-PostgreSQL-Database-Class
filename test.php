@@ -313,7 +313,7 @@
 	$Database->where('id', 3)->delete('users');
 	if ($Database->where('id', 3)->has('users'))
 		fail('DELETE_WHERE_NOT_DELETING');
-	if ($Database->where('id',array('<' => 3))->count('users') !== 2)
+	if ($Database->where('id', 3, '<')->count('users') !== 2)
 		fail('DELETE_WHERE_DELETING_WRONG_ROWS');
 	// Standalone call
 	$Database->delete('users');
