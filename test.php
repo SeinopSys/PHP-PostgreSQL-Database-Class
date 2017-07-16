@@ -93,12 +93,13 @@
 
 	// Check tableExists & rawQuery
 	try {
-		if ($Database->tableExists('users') !== false)
-			exit($_['TABLEEXISTS_NOT_FALSE']);
+		$Database->pdo();
 	}
 	catch (Exception $e){
 		fail('TESTDB_CONNECTION_ERROR');
 	}
+	if ($Database->tableExists('users') !== false)
+		exit($_['TABLEEXISTS_NOT_FALSE']);
 	$Database->query('CREATE TABLE "users" (id serial NOT NULL, name character varying(10), gender character(1) NOT NULL)');
 	if ($Database->tableExists('users') !== true)
 		fail('TABLEEXISTS_NOT_TRUE');
