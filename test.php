@@ -190,7 +190,7 @@
 	# where() Checks
 	// Generic use
 	$Id1 = $Database->where('id', 1)->get('users');
-	checkQuery('SELECT * FROM "users" WHERE "id" = 1', 'WHERE_QUERY_MISMATCH');
+	checkQuery('SELECT * FROM "users" WHERE id = 1', 'WHERE_QUERY_MISMATCH');
 	if (empty($Id1) || !isset($Id1[0]['id']))
 		fail('WHERE_RETURNING_WRONG_DATA');
 	if ($Id1[0]['id'] !== 1)
@@ -199,14 +199,14 @@
 		fail('WHERE_RETURNING_WRONG_DATA_TYPE_STRING');
 	// String check
 	$Id1 = $Database->where('"id" = 1')->get('users');
-	checkQuery('SELECT * FROM "users" WHERE "id" = 1', 'WHERE_QUERY_STRING_MISMATCH');
+	checkQuery('SELECT * FROM "users" WHERE id = 1', 'WHERE_QUERY_STRING_MISMATCH');
 	if (empty($Id1) || !isset($Id1[0]['id']) || $Id1[0]['id'] != 1)
 		fail('WHERE_RETURNING_WRONG_DATA');
 	if (!is_int($Id1[0]['id']))
 		fail('WHERE_RETURNING_WRONG_DATA_TYPE_INT');
 	// Array check
 	$Id1 = $Database->where('id',array(1, 2))->orderBy('id')->get('users');
-	checkQuery('SELECT * FROM "users" WHERE "id" IN (1, 2) ORDER BY "id" ASC', 'WHERE_QUERY_ARRAY_MISMATCH');
+	checkQuery('SELECT * FROM "users" WHERE id IN (1, 2) ORDER BY "id" ASC', 'WHERE_QUERY_ARRAY_MISMATCH');
 	if (empty($Id1) || !isset($Id1[0]['id']) || $Id1[0]['id'] != 1 || !isset($Id1[1]['id']) || $Id1[1]['id'] != 2)
 		fail('WHERE_RETURNING_WRONG_DATA');
 	if (!is_int($Id1[0]['id']) || !is_int($Id1[1]['id']))
@@ -215,7 +215,7 @@
 	# getOne() Checks
 	// Generic call
 	$FirstUser = $Database->where('id', 1)->getOne('users');
-	checkQuery('SELECT * FROM "users" WHERE "id" = 1 LIMIT 1', 'GETONE_QUERY_MISMATCH');
+	checkQuery('SELECT * FROM "users" WHERE id = 1 LIMIT 1', 'GETONE_QUERY_MISMATCH');
 	if (isset($FirstUser[0]) && is_array($FirstUser[0]))
 		fail('GETONE_RETURNING_WRONG_STRUCTURE');
 	if ($FirstUser['id'] != 1)
@@ -226,7 +226,7 @@
 		fail('GETONE_RETURNING_WRONG_DATA_TYPE_STRING');
 	// Columns
 	$FirstUser = $Database->where('id', 1)->getOne('users','id, name');
-	checkQuery('SELECT id, name FROM "users" WHERE "id" = 1 LIMIT 1', 'GETONE_QUERY_COLUMN_MISMATCH');
+	checkQuery('SELECT id, name FROM "users" WHERE id = 1 LIMIT 1', 'GETONE_QUERY_COLUMN_MISMATCH');
 	if ($FirstUser['id'] != 1)
 		fail('GETONE_RETURNING_COLUMN_WRONG_DATA');
 	if (!is_int($FirstUser['id']))
