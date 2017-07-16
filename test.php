@@ -35,7 +35,8 @@
 		'WHERE_QUERY_ARRAY_MISMATCH' => 0x503,
 		'WHERE_RETURNING_WRONG_DATA_TYPE_INT' => 0x504,
 		'WHERE_RETURNING_WRONG_DATA_TYPE_STRING' => 0x505,
-		
+		'WHERE_QUERY_BETWEEN_ARRAY_MISMATCH' => 0x506,
+
 		'ORDERBY_QUERY_MISMATCH' => 0x600,
 		'ORDERBY_RETURNING_WRONG_DATA' => 0x601,
 		'ORDERBY_RETURNING_WRONG_DATA_TYPE_INT' => 0x602,
@@ -207,6 +208,13 @@
 	// Array check
 	$Id1 = $Database->where('id',array(1, 2))->orderBy('id')->get('users');
 	checkQuery('SELECT * FROM "users" WHERE id IN (1, 2) ORDER BY "id" ASC', 'WHERE_QUERY_ARRAY_MISMATCH');
+	if (empty($Id1) || !isset($Id1[0]['id']) || $Id1[0]['id'] != 1 || !isset($Id1[1]['id']) || $Id1[1]['id'] != 2)
+		fail('WHERE_RETURNING_WRONG_DATA');
+	if (!is_int($Id1[0]['id']) || !is_int($Id1[1]['id']))
+		fail('WHERE_RETURNING_WRONG_DATA_TYPE_INT');
+	// Between array check
+	$Id1 = $Database->where('id',array(1, 2),'BETWEEN')->orderBy('id')->get('users');
+	checkQuery('SELECT * FROM "users" WHERE id BETWEEN 1 AND 2 ORDER BY "id" ASC', 'WHERE_QUERY_BETWEEN_ARRAY_MISMATCH');
 	if (empty($Id1) || !isset($Id1[0]['id']) || $Id1[0]['id'] != 1 || !isset($Id1[1]['id']) || $Id1[1]['id'] != 2)
 		fail('WHERE_RETURNING_WRONG_DATA');
 	if (!is_int($Id1[0]['id']) || !is_int($Id1[1]['id']))

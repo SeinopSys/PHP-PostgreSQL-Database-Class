@@ -336,9 +336,20 @@ class PostgresDb {
 				continue;
 			}
 
-			switch (strtolower($operator)) {
-				case 'not in':
-				case 'in':
+			if (is_array($whereValue)){
+				switch ($operator){
+					case '!=':
+						$operator = 'NOT IN';
+					break;
+					case '=':
+						$operator = 'IN';
+					break;
+				}
+			}
+
+			switch ($operator) {
+				case 'NOT IN':
+				case 'IN':
 					$comparison = ' '.$operator.' (';
 					if (is_object($whereValue)){
 						$comparison .= $this->_buildPair('', $whereValue);
@@ -352,13 +363,13 @@ class PostgresDb {
 					}
 					$this->_query .= rtrim($comparison, ',').' ) ';
 				break;
-				case 'not between':
-				case 'between':
+				case 'NOT BETWEEN':
+				case 'BETWEEN':
 					$this->_query .= " $operator ? AND ? ";
 					$this->_bindParams($whereValue);
 				break;
-				case 'not exists':
-				case 'exists':
+				case 'NOT EXISTS':
+				case 'EXISTS':
 					$this->_query .= $operator.$this->_buildPair('', $whereValue);
 				break;
 				default:
@@ -643,7 +654,7 @@ class PostgresDb {
 		if (count($this->_where) === 0){
 			$cond = '';
 		}
-		$this->_where[] = array($cond, $whereProp, $operator, $whereValue);
+		$this->_where[] = array($cond, $whereProp, strtoupper($operator), $whereValue);
 
 		return $this;
 	}
