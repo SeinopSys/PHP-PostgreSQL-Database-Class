@@ -174,7 +174,7 @@
 
 	// Check insert with returning integer
 	$id = $Database->insert('users',array('name' => 'Jon', 'gender' => 'm'), 'id');
-	checkQuery('INSERT INTO "users" ("name", gender) VALUES (\'Jon\', \'m\') RETURNING "id"', 'INSERT_QUERY_MISMATCH');
+	checkQuery('INSERT INTO "users" ("name", gender) VALUES (\'Jon\', \'m\') RETURNING id', 'INSERT_QUERY_MISMATCH');
 	if (!is_int($id))
 		fail('INSERT_RETURN_WRONG_DATA_TYPE_INT');
 	if ($id !== 2)
