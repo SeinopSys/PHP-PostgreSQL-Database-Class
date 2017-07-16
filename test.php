@@ -43,6 +43,8 @@
 		
 		'RAWQUERY_QUERY_MISMATCH' => 0x700,
 		'RAWQUERY_RETURNING_WRONG_DATA' => 0x701,
+		'RAWQUERY_ARRAY_QUERY_MISMATCH' => 0x702,
+		'RAWQUERY_ARRAY_RETURNING_WRONG_DATA' => 0x703,
 		
 		'COUNT_QUERY_MISMATCH' => 0x800,
 		'COUNT_RETURNING_WRONG_DATA_TYPE' => 0x801,
@@ -67,14 +69,14 @@
 	function fail($exitkey){
 		global $_;
 		if (!isset($_[$exitkey]))
-			throw new Exception("FAILURE: $exitkey (invalid exit code)");
+			throw new RuntimeException("FAILURE: $exitkey (invalid exit code)");
 
 		$RawExitCode = $_[$exitkey];
 		$ExitCode = '0x'.strtoupper(dechex($RawExitCode));
-		throw new Exception("FAILURE: $exitkey ($ExitCode)\n");
+		throw new RuntimeException("FAILURE: $exitkey ($ExitCode)\n");
 	}
 
-	require "PostgresDb.php";
+	require __DIR__.'/PostgresDb.php';
 	$Database = new PostgresDb('test','localhost','postgres','');
 	function checkQuery($expect, $exitkey){
 		global $Database;
@@ -97,11 +99,11 @@
 	catch (Exception $e){
 		fail('TESTDB_CONNECTION_ERROR');
 	}
-	$Database->rawQuery('CREATE TABLE "users" (id serial NOT NULL, name character varying(10), gender character(1) NOT NULL)');
+	$Database->query('CREATE TABLE "users" (id serial NOT NULL, name character varying(10), gender character(1) NOT NULL)');
 	if ($Database->tableExists('users') !== true)
 		fail('TABLEEXISTS_NOT_TRUE');
 	// Add PRIMARY KEY constraint
-	$Database->rawQuery('ALTER TABLE "users" ADD CONSTRAINT "users_id" PRIMARY KEY ("id")');
+	$Database->query('ALTER TABLE "users" ADD CONSTRAINT "users_id" PRIMARY KEY ("id")');
 
 	# get() Checks
 	// Regular call
@@ -201,11 +203,11 @@
 	if (!is_int($Id1[0]['id']))
 		fail('WHERE_RETURNING_WRONG_DATA_TYPE_INT');
 	// Array check
-	$Id1 = $Database->where('id',array('=' => 1))->get('users');
-	checkQuery('SELECT * FROM "users" WHERE "id" = 1', 'WHERE_QUERY_ARRAY_MISMATCH');
-	if (empty($Id1) || !isset($Id1[0]['id']) || $Id1[0]['id'] != 1)
+	$Id1 = $Database->where('id',array(1, 2))->orderBy('id','ASC')->get('users');
+	checkQuery('SELECT * FROM "users" WHERE "id" IN (1, 2) ORDER BY "id" ASC', 'WHERE_QUERY_ARRAY_MISMATCH');
+	if (empty($Id1) || !isset($Id1[0]['id']) || $Id1[0]['id'] != 1 || !isset($Id1[1]['id']) || $Id1[1]['id'] != 2)
 		fail('WHERE_RETURNING_WRONG_DATA');
-	if (!is_int($Id1[0]['id']))
+	if (!is_int($Id1[0]['id']) || !is_int($Id1[1]['id']))
 		fail('WHERE_RETURNING_WRONG_DATA_TYPE_INT');
 
 	# getOne() Checks
@@ -254,14 +256,14 @@
 
 	# rawQuery() Checks
 	// No bound parameteres
-	$FirstTwoUsers = $Database->rawQuery('SELECT * FROM "users" WHERE id <= 2');
+	$FirstTwoUsers = $Database->query('SELECT * FROM "users" WHERE id <= 2');
 	checkQuery('SELECT * FROM "users" WHERE id <= 2','RAWQUERY_QUERY_MISMATCH');
 	if (!is_array($FirstTwoUsers))
 		fail('RAWQUERY_RETURNING_WRONG_DATA');
 	if (count($FirstTwoUsers) !== 2)
 		fail('RAWQUERY_RETURNING_WRONG_DATA');
 	// Bound parameteres
-	$FirstTwoUsers = $Database->rawQuery('SELECT * FROM "users" WHERE id <= ?', array(2));
+	$FirstTwoUsers = $Database->query('SELECT * FROM "users" WHERE id <= ?', array(2));
 	checkQuery('SELECT * FROM "users" WHERE id <= 2','RAWQUERY_QUERY_MISMATCH');
 	if (!is_array($FirstTwoUsers))
 		fail('RAWQUERY_RETURNING_WRONG_DATA');
@@ -309,7 +311,7 @@
 		fail('DELETE_NOT_DELETING');
 
 	# join() Checks
-	$Database->rawQuery('CREATE TABLE "userdata" (id serial NOT NULL, somevalue integer)');
+	$Database->query('CREATE TABLE "userdata" (id serial NOT NULL, somevalue integer)');
 	$Database->insert('userdata',[ 'somevalue' => 1 ]);
 	$Database->join('userdata','userdata.id = users.id','LEFT')->where('users.id',1)->get('users',null,'users.*');
 	checkQuery('SELECT users.* FROM "users" LEFT JOIN "userdata" ON userdata.id = users.id WHERE users.id = 1','JOIN_QUERY_MISMATCH');
