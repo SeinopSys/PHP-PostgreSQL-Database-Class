@@ -95,11 +95,12 @@
 	try {
 		$Database->pdo();
 	}
-	catch (Exception $e){
+	catch (Throwable $e){
+		var_dump($e);
 		fail('TESTDB_CONNECTION_ERROR');
 	}
 	if ($Database->tableExists('users') !== false)
-		exit($_['TABLEEXISTS_NOT_FALSE']);
+		fail('TABLEEXISTS_NOT_FALSE');
 	$Database->query('CREATE TABLE "users" (id serial NOT NULL, name character varying(10), gender character(1) NOT NULL)');
 	if ($Database->tableExists('users') !== true)
 		fail('TABLEEXISTS_NOT_TRUE');
@@ -173,14 +174,14 @@
 
 	// Check insert with returning integer
 	$id = $Database->insert('users',array('name' => 'Jon', 'gender' => 'm'), 'id');
-	checkQuery('INSERT INTO "users" ("name", "gender") VALUES (\'Jon\', \'m\') RETURNING "id"', 'INSERT_QUERY_MISMATCH');
+	checkQuery('INSERT INTO "users" ("name", gender) VALUES (\'Jon\', \'m\') RETURNING "id"', 'INSERT_QUERY_MISMATCH');
 	if (!is_int($id))
 		fail('INSERT_RETURN_WRONG_DATA_TYPE_INT');
 	if ($id !== 2)
 		fail('INSERT_RETURN_WRONG_DATA');
 	// Check insert with returning string
 	$name = $Database->insert('users',array('name' => 'Anna', 'gender' => 'f'), 'name');
-	checkQuery('INSERT INTO "users" ("name", "gender") VALUES (\'Anna\', \'f\') RETURNING "name"', 'INSERT_QUERY_MISMATCH');
+	checkQuery('INSERT INTO "users" ("name", gender) VALUES (\'Anna\', \'f\') RETURNING "name"', 'INSERT_QUERY_MISMATCH');
 	if (!is_string($name))
 		fail('INSERT_RETURN_WRONG_DATA_TYPE_STRING');
 	if ($name !== 'Anna')
@@ -204,7 +205,7 @@
 	if (!is_int($Id1[0]['id']))
 		fail('WHERE_RETURNING_WRONG_DATA_TYPE_INT');
 	// Array check
-	$Id1 = $Database->where('id',array(1, 2))->orderBy('id','ASC')->get('users');
+	$Id1 = $Database->where('id',array(1, 2))->orderBy('id')->get('users');
 	checkQuery('SELECT * FROM "users" WHERE "id" IN (1, 2) ORDER BY "id" ASC', 'WHERE_QUERY_ARRAY_MISMATCH');
 	if (empty($Id1) || !isset($Id1[0]['id']) || $Id1[0]['id'] != 1 || !isset($Id1[1]['id']) || $Id1[1]['id'] != 2)
 		fail('WHERE_RETURNING_WRONG_DATA');
