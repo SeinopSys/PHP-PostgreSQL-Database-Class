@@ -357,11 +357,11 @@ class PostgresDb {
 					else {
 						/** @var $whereValue array */
 						foreach ($whereValue as $k => $v){
-							$comparison .= ' ?,';
+							$comparison .= '?, ';
 							$this->_bindParam($v,$k);
 						}
 					}
-					$this->_query .= rtrim($comparison, ',').' ) ';
+					$this->_query .= rtrim($comparison, ', ').') ';
 				break;
 				case 'NOT BETWEEN':
 				case 'BETWEEN':
