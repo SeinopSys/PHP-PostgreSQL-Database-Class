@@ -199,7 +199,7 @@
 		fail('WHERE_RETURNING_WRONG_DATA_TYPE_STRING');
 	// String check
 	$Id1 = $Database->where('"id" = 1')->get('users');
-	checkQuery('SELECT * FROM "users" WHERE id = 1', 'WHERE_QUERY_STRING_MISMATCH');
+	checkQuery('SELECT * FROM "users" WHERE "id" = 1', 'WHERE_QUERY_STRING_MISMATCH');
 	if (empty($Id1) || !isset($Id1[0]['id']) || $Id1[0]['id'] != 1)
 		fail('WHERE_RETURNING_WRONG_DATA');
 	if (!is_int($Id1[0]['id']))
