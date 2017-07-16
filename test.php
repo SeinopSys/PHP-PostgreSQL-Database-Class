@@ -59,6 +59,7 @@
 		'DELETE_NOT_DELETING' => 0xA02,
 
 		'JOIN_QUERY_MISMATCH' => 0xB00,
+		'JOIN_QUERY_ALIAS_MISMATCH' => 0xB01,
 
 		'PDO_ERRMODE_UNCHANGED_PRECONN' => 0xC00,
 		'PDO_ERRMODE_UNCHANGED_POSTCONN' => 0xC01,
@@ -324,4 +325,6 @@
 	$Database->query('CREATE TABLE "userdata" (id serial NOT NULL, somevalue integer)');
 	$Database->insert('userdata',[ 'somevalue' => 1 ]);
 	$Database->join('userdata','userdata.id = users.id','LEFT')->where('users.id',1)->get('users',null,'users.*');
-	checkQuery('SELECT users.* FROM "users" LEFT JOIN "userdata" ON userdata.id = users.id WHERE users.id = 1','JOIN_QUERY_MISMATCH');
+	checkQuery('SELECT "users".* FROM "users" LEFT JOIN "userdata" ON userdata.id = users.id WHERE "users".id = 1','JOIN_QUERY_MISMATCH');
+	$Database->join('userdata ud','ud.id = u.id','LEFT')->where('u.id',1)->get('users u',null,'u.*');
+	checkQuery('SELECT "u".* FROM "users" u LEFT JOIN "userdata" ud ON ud.id = u.id WHERE "u".id = 1','JOIN_QUERY_ALIAS_MISMATCH');
