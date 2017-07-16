@@ -97,14 +97,19 @@ array(
 
 ```php
 // SELECT * FROM users WHERE "id" = 1 LIMIT 1
-$Database->where('id', 1)->getOne('users');
+$Database->where('id', 1)->get('users');
 
 // SELECT * FROM users LIMIT 1 WHERE "id" != 1
-$Database->where('"id" != 1')->get('users');
+$Database->where('"id" != 1')->getOne('users');
 
 // SELECT * FROM users LIMIT 1 WHERE "id" != 1
-$Database->where('id', array('!=' => 1))->get('users');
-$Database->where('id', 1, '!=')->get('users');
+$Database->where('id', 1, '!=')->getOne('users');
+
+// SELECT * FROM users LIMIT 1 WHERE "id" IN (1, 3)
+$Database->where('id', array(1, 3))->getOne('users');
+
+// SELECT * FROM users LIMIT 1 WHERE "id" NOT IN (1, 3)
+$Database->where('id', array(1, 3), '!=')->getOne('users');
 ```
 
 ### Join [`join()`]

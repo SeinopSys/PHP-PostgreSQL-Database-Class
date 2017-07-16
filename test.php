@@ -213,6 +213,8 @@
 		fail('WHERE_RETURNING_WRONG_DATA');
 	if (!is_int($Id1[0]['id']) || !is_int($Id1[1]['id']))
 		fail('WHERE_RETURNING_WRONG_DATA_TYPE_INT');
+	$Database->where('id',array(1, 2), '!=')->orderBy('id')->get('users');
+	checkQuery('SELECT * FROM "users" WHERE id NOT IN (1, 2) ORDER BY id ASC', 'WHERE_QUERY_ARRAY_MISMATCH');
 	// Between array check
 	$Id1 = $Database->where('id',array(1, 2),'BETWEEN')->orderBy('id')->get('users');
 	checkQuery('SELECT * FROM "users" WHERE id BETWEEN 1 AND 2 ORDER BY id ASC', 'WHERE_QUERY_BETWEEN_ARRAY_MISMATCH');
