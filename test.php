@@ -234,7 +234,7 @@
 		fail('GETONE_RETURNING_WRONG_DATA_TYPE_STRING');
 	// Columns
 	$FirstUser = $Database->where('id', 1)->getOne('users','id, name');
-	checkQuery('SELECT id, name FROM "users" WHERE id = 1 LIMIT 1', 'GETONE_QUERY_COLUMN_MISMATCH');
+	checkQuery('SELECT id, "name" FROM "users" WHERE id = 1 LIMIT 1', 'GETONE_QUERY_COLUMN_MISMATCH');
 	if ($FirstUser['id'] != 1)
 		fail('GETONE_RETURNING_COLUMN_WRONG_DATA');
 	if (!is_int($FirstUser['id']))
