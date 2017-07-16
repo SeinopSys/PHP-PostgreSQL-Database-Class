@@ -57,6 +57,7 @@
 		'DELETE_WHERE_NOT_DELETING' => 0xA00,
 		'DELETE_WHERE_DELETING_WRONG_ROWS' => 0xA01,
 		'DELETE_NOT_DELETING' => 0xA02,
+		'DELETE_QUERY_MISMATCH' => 0xA03,
 
 		'JOIN_QUERY_MISMATCH' => 0xB00,
 		'JOIN_QUERY_ALIAS_MISMATCH' => 0xB01,
@@ -314,14 +315,19 @@
 	# delete() Checks
 	// Call with where()
 	$Database->where('id', 3)->delete('users');
+	checkQuery('DELETE FROM "users" WHERE id = 3','DELETE_QUERY_MISMATCH');
 	if ($Database->where('id', 3)->has('users'))
 		fail('DELETE_WHERE_NOT_DELETING');
 	if ($Database->where('id', 3, '<')->count('users') !== 2)
 		fail('DELETE_WHERE_DELETING_WRONG_ROWS');
 	// Standalone call
 	$Database->delete('users');
+	checkQuery('DELETE FROM "users"','DELETE_QUERY_MISMATCH');
 	if ($Database->has('users'))
 		fail('DELETE_NOT_DELETING');
+	// Array
+	$Database->where('id', array(3, 4))->delete('users');
+	checkQuery('DELETE FROM "users" WHERE id IN (3, 4)','DELETE_QUERY_MISMATCH');
 
 	# join() Checks
 	$Database->query('CREATE TABLE "userdata" (id serial NOT NULL, somevalue integer)');
