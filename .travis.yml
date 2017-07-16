@@ -3,12 +3,11 @@ php:
   - 5.6
   - 7
   - 7.1
-addons:
-  postgresql: "9.4"
 notifications:
   email: false
-services:
-  - postgresql
+dist: trusty
+addons:
+  postgresql: "9.6"
 before_script:
   - psql -c 'CREATE DATABASE test;' -U postgres
 script: php -f test.php

@@ -140,7 +140,7 @@
 	# count() Checks
 	// Call
 	$Count = $Database->count('users');
-	checkQuery('SELECT COUNT(*) as cnt FROM "users" LIMIT 1', 'COUNT_QUERY_MISMATCH');
+	checkQuery('SELECT COUNT(*) AS cnt FROM "users" LIMIT 1', 'COUNT_QUERY_MISMATCH');
 	if (!is_int($Count))
 		fail('COUNT_RETURNING_WRONG_DATA_TYPE');
 	if ($Count !== 0)
@@ -249,7 +249,7 @@
 	# groupBy() Checks
 	// Generic call
 	$GenderCount = $Database->groupBy('gender')->orderBy('cnt','DESC')->get('users',null,'gender, COUNT(*) as cnt');
-	checkQuery('SELECT gender, COUNT(*) as cnt FROM "users" GROUP BY "gender" ORDER BY cnt DESC','GROUPBY_QUERY_MISMATCH');
+	checkQuery('SELECT gender, COUNT(*) AS cnt FROM "users" GROUP BY "gender" ORDER BY cnt DESC','GROUPBY_QUERY_MISMATCH');
 	if (!isset($GenderCount[0]['cnt']) || !isset($GenderCount[1]['cnt']) || !isset($GenderCount[0]['gender']) || !isset($GenderCount[1]['gender']))
 		fail('GROUPBY_RETURNING_WRONG_DATA');
 	if ($GenderCount[0]['cnt'] !== 2 || $GenderCount[1]['cnt'] !== 1 || $GenderCount[0]['gender'] !== 'm' || $GenderCount[1]['gender'] !== 'f')
