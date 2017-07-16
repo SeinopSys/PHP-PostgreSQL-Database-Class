@@ -261,7 +261,7 @@ class PostgresDb {
 		if (is_bool($value)){
 			$value = $value ? 'true' : 'false';
 		}
-		if ($key === null){
+		if ($key === null || is_numeric($key)){
 			$this->_bindParams[] = $value;
 		}
 		else $this->_bindParams[$key] = $value;
@@ -844,15 +844,13 @@ class PostgresDb {
 	public function delete($tableName, $returnColumn = null){
 		if (!empty($this->_join) || !empty($this->_orderBy) || !empty($this->_groupBy))
 			throw new RuntimeException(__METHOD__.' cannot be used with JOIN, ORDER BY or GROUP BY');
+		$this->disableAutoClass();
 
 		$table = $this->_quoteTableName($tableName);
 		$this->_query = "DELETE FROM $table";
 
 		$stmt = $this->_buildQuery(null, null, $returnColumn);
 
-		if ($this->_autoClassEnabled){
-			$this->_tableName = $tableName;
-		}
 		$res = $this->_execStatement($stmt);
 
 		if ($res === false || $this->count < 1){
