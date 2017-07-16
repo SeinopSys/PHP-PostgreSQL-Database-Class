@@ -157,7 +157,7 @@
 
 	# insert() Checks
 	$Database->insert('users',array('name' => 'David', 'gender' => 'm'));
-	checkQuery('INSERT INTO "users" ("name", "gender") VALUES (\'David\', \'m\')', 'INSERT_QUERY_MISMATCH');
+	checkQuery('INSERT INTO "users" ("name", gender) VALUES (\'David\', \'m\')', 'INSERT_QUERY_MISMATCH');
 
 	# get() format checks
 	$Users = $Database->get('users');
