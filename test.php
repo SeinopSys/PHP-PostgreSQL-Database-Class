@@ -127,6 +127,9 @@
 	// Check get with column(s)
 	$Users = $Database->get('users',null,'id');
 	checkQuery('SELECT id FROM "users"', 'GET_QUERY_COLUMNS_MISMATCH');
+	// Check get with complex column(s)
+	$Users = $Database->get('users',null,"'ayy-'||id as happy_id");
+	checkQuery("SELECT 'ayy-'||id AS happy_id FROM \"users\"", 'GET_QUERY_COLUMNS_MISMATCH');
 
 	# check PDO errormode setting
 	$Database->setPDOErrmode(PDO::ERRMODE_EXCEPTION);
