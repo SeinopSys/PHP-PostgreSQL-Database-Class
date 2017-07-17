@@ -1034,11 +1034,11 @@ class PostgresDb {
 		if (strpos($columnName, '->>') !== false && preg_match('~^"?([a-z_\-\d]+)"?->>\'?([\w\-]+)\'?"?$~', $columnName, $match)){
 			return "\"$match[1]\"".(!empty($match[2]) ? "->>'".self::_escapeApostrophe($match[2])."'" : '');
 		}
-		// Let's not mess with TOO complex column names
-		if (preg_match($dotTest = '~(\|\||\')(?<!\\\\\1)~', $columnName))
+		// Let's not mess with TOO complex column names (containing || or ')
+		if (strpos($columnName, '||') !== false || preg_match('~\'(?<!\\\\\')~', $columnName))
 			return $columnName;
 
-		if (strpos($columnName, '.') !== false && preg_match($dotTest = '~(\.)(?<!\\\\\1)~', $columnName)){
+		if (strpos($columnName, '.') !== false && preg_match($dotTest = '~\.(?<!\\\\\.)~', $columnName)){
 			$split = preg_split($dotTest, $columnName);
 			if (count($split) > 2)
 				throw new RuntimeException("Column $columnName contains more than one table separation dot");
