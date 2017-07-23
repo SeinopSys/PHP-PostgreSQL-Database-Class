@@ -1113,7 +1113,7 @@ class PostgresDb {
 				return strtoupper($match[1]);
 			}, $className)));
 			$append = $namespaced ? '\\' : '';
-			$className = preg_replace_callback('/__([a-z])/', function ($match) use ($append){
+			$className = preg_replace_callback('/__?([a-z])/', function ($match) use ($append){
 				return $append.strtoupper($match[1]);
 			}, $className);
 		}
