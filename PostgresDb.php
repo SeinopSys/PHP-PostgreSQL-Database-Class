@@ -330,7 +330,7 @@ class PostgresDb {
 				$whereProp = $this->_quoteColumnName($whereProp);
 			}
 
-			$this->_query .= ' '.trim("$cond $whereProp");
+			$this->_query = rtrim($this->_query).' '.trim("$cond $whereProp");
 
 			if ($whereValue === self::DBNULL){
 				continue;
@@ -377,7 +377,15 @@ class PostgresDb {
 						$this->_bindParams($whereValue);
 					}
 					else if ($whereValue === null){
-						$this->_query .= $operator.' NULL';
+						switch ($operator){
+							case '!=':
+								$operator = 'IS NOT';
+							break;
+							case '=':
+								$operator = 'IS';
+							break;
+						}
+						$this->_query .= " $operator NULL ";
 					}
 					else if ($whereValue !== self::DBNULL || $whereValue === 0 || $whereValue === '0'){
 						$this->_query .= $this->_buildPair($operator, $whereValue);

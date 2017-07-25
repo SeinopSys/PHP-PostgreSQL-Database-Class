@@ -36,6 +36,7 @@
 		'WHERE_RETURNING_WRONG_DATA_TYPE_INT' => 0x504,
 		'WHERE_RETURNING_WRONG_DATA_TYPE_STRING' => 0x505,
 		'WHERE_QUERY_BETWEEN_ARRAY_MISMATCH' => 0x506,
+		'WHERE_QUERY_NULL_MISMATCH' => 0x507,
 
 		'ORDERBY_QUERY_MISMATCH' => 0x600,
 		'ORDERBY_RETURNING_WRONG_DATA' => 0x601,
@@ -210,6 +211,9 @@
 		fail('WHERE_RETURNING_WRONG_DATA');
 	if (!is_int($Id1[0]['id']))
 		fail('WHERE_RETURNING_WRONG_DATA_TYPE_INT');
+	// Null equality check
+	$Database->where('id', null)->get('users');
+	checkQuery('SELECT * FROM "users" WHERE "id" IS NULL', 'WHERE_QUERY_NULL_MISMATCH');
 	// Array check
 	$Id1 = $Database->where('id',array(1, 2))->orderBy('id')->get('users');
 	checkQuery('SELECT * FROM "users" WHERE id IN (1, 2) ORDER BY id ASC', 'WHERE_QUERY_ARRAY_MISMATCH');
