@@ -31,7 +31,7 @@
 		
 		'WHERE_QUERY_MISMATCH' => 0x500,
 		'WHERE_RETURNING_WRONG_DATA' => 0x501,
-		'WHERE_QUERY_STRING_MISMATCH' => 0x502,
+		'WHERE_QUERY_LITERAL_MISMATCH' => 0x502,
 		'WHERE_QUERY_ARRAY_MISMATCH' => 0x503,
 		'WHERE_RETURNING_WRONG_DATA_TYPE_INT' => 0x504,
 		'WHERE_RETURNING_WRONG_DATA_TYPE_STRING' => 0x505,
@@ -204,16 +204,16 @@
 		fail('WHERE_RETURNING_WRONG_DATA_TYPE_INT');
 	if ($Id1[0]['name'] !== 'David')
 		fail('WHERE_RETURNING_WRONG_DATA_TYPE_STRING');
-	// String check
+	// Literal string check
 	$Id1 = $Database->where('"id" = 1')->get('users');
-	checkQuery('SELECT * FROM "users" WHERE "id" = 1', 'WHERE_QUERY_STRING_MISMATCH');
+	checkQuery('SELECT * FROM "users" WHERE "id" = 1', 'WHERE_QUERY_LITERAL_MISMATCH');
 	if (empty($Id1) || !isset($Id1[0]['id']) || $Id1[0]['id'] != 1)
 		fail('WHERE_RETURNING_WRONG_DATA');
 	if (!is_int($Id1[0]['id']))
 		fail('WHERE_RETURNING_WRONG_DATA_TYPE_INT');
 	// Null equality check
 	$Database->where('id', null)->get('users');
-	checkQuery('SELECT * FROM "users" WHERE "id" IS NULL', 'WHERE_QUERY_NULL_MISMATCH');
+	checkQuery('SELECT * FROM "users" WHERE id IS NULL', 'WHERE_QUERY_NULL_MISMATCH');
 	// Array check
 	$Id1 = $Database->where('id',array(1, 2))->orderBy('id')->get('users');
 	checkQuery('SELECT * FROM "users" WHERE id IN (1, 2) ORDER BY id ASC', 'WHERE_QUERY_ARRAY_MISMATCH');
