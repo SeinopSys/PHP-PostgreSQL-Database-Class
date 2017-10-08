@@ -620,7 +620,7 @@ class PostgresDb {
 	/**
 	 * Execute rawQuery with specified parameters an return a single row only
 	 *
-	 * @param array $args Arguments to be forwarded to rawQuery
+	 * @param mixed $args,... Arguments to be forwarded to rawQuery
 	 *
 	 * @return array
 	 * @throws RuntimeException
