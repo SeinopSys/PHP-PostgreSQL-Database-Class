@@ -285,7 +285,7 @@ $Database->where('"id" = 2')->has('users'); // true
 
 #### Get last executed query [`getLastQuery():string`]
 
-This will return the last query executed through the class with the bound value placeholders replaced with actual values. Executing this query will most likely fail because quotation marks aren't added around strings when replacing.
+This will return the last query executed through the class where the placeholders have been replaced with actual values. While the class does its best to keep the SQL valid you should not rely on the returned value being a valid query. 
 
 ```php
 $Database->insert('users',array('name' => 'Sarah'))
@@ -335,9 +335,9 @@ class PostgresDbWrapper extends PostgresDb {
 
 ### Object return values
 
-The script contains two utility methods (`tableNameToClassName` and `setClass`) which allow for the creation of a wrapper that can force returned values into a class instead of an array. This allows for using both the array and class method simultaneously with minimal effort. An example of such a wrapper class is shown below.
+The class contains two utility methods (`tableNameToClassName` and `setClass`) which allow for the creation of a wrapper that can force returned values into a class instead of an array. This allows for using both the array and class method simultaneously with minimal effort. An example of such a wrapper class is shown below.
 
-This assumes an autoloader is configured within the project which allows classes to be loaded on the fly as needed. This method will cause the autoloader to attempt loading the class within the `DB` namespace when `class_exists` is called. If it fails, a key is set on a private array. This prevents future checks for the existence of the same class, which could otherwise impact the application's performace.
+This assumes an autoloader is configured within the project which allows classes to be loaded on the fly as needed. This method will cause the autoloader to attempt loading the class within the `DB` namespace when `class_exists` is called. If it fails, a key is set on a private array. This prevents future checks for the existence of the same class to avoid significantly impacting the application's performace.
 
 ```php
 class PostgresDbWrapper extends PostgresDb {
