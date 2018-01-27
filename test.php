@@ -68,6 +68,8 @@
 
 		'GROUPBY_QUERY_MISMATCH' => 0xD00,
 		'GROUPBY_RETURNING_WRONG_DATA' => 0xD01,
+
+		'STRING_MISMATCH' => 0xFFF,
 	);
 
 	function fail($exitkey){
@@ -79,8 +81,37 @@
 		$ExitCode = '0x'.strtoupper(dechex($RawExitCode));
 		throw new RuntimeException("FAILURE: $exitkey ($ExitCode)\n");
 	}
+	function expect($generated, $expect, $exitkey = 'STRING_MISMATCH'){
+		if ($expect !== $generated){
+			echo "Mismatched string\nExpected: ", var_export($expect, true), "\n     Got: ", var_export($generated, true), "\n";
+			fail($exitkey);
+		}
+	}
 
 	require __DIR__.'/PostgresDb.php';
+
+	# replacePlaceHolders() checks
+	expect(
+		PostgresDb::replacePlaceHolders('SELECT * FROM users WHERE id = ? AND name = ?', [1, 'John']),
+		"SELECT * FROM users WHERE id = 1 AND name = 'John'"
+	);
+	expect(
+		PostgresDb::replacePlaceHolders('SELECT * FROM users WHERE id = :id AND name = :un', [':id' => 1, ':un' => 'John']),
+		"SELECT * FROM users WHERE id = 1 AND name = 'John'"
+	);
+	expect(
+		PostgresDb::replacePlaceHolders('SELECT * FROM users WHERE id = :id AND name = ?', [':id' => 1, 'John']),
+		"SELECT * FROM users WHERE id = 1 AND name = 'John'"
+	);
+	expect(
+		PostgresDb::replacePlaceHolders('SELECT * FROM users WHERE id = :id AND name = ? AND role = ? AND password IS :pw', [':id' => 1, 'John', ':pw' => null, 'admin']),
+		"SELECT * FROM users WHERE id = 1 AND name = 'John' AND role = 'admin' AND password IS NULL"
+	);
+	expect(
+		PostgresDb::replacePlaceHolders('SELECT * FROM users WHERE id = :id AND name = ? AND role = ? AND password IS :pw', ['id' => 1, 'John', 'pw' => null, 'admin']),
+		"SELECT * FROM users WHERE id = 1 AND name = 'John' AND role = 'admin' AND password IS NULL"
+	);
+
 	$Database = new PostgresDb('test','localhost','postgres','');
 	function checkQuery($expect, $exitkey){
 		global $Database;
@@ -88,11 +119,7 @@
 		if (empty($Database))
 			return false;
 
-		$LastQuery = $Database->getLastQuery();
-		if ($expect !== $LastQuery){
-			echo "Mismatched query string\nExpected: ".var_export($expect, true)."\n     Got: ".var_export($LastQuery, true)."\n";
-			fail($exitkey);
-		}
+		expect($Database->getLastQuery(), $expect, $exitkey);
 	}
 
 	// Check tableExists & rawQuery

@@ -222,33 +222,57 @@ class PostgresDb {
 	}
 
 	/**
-	 * Function to replace ? with variables from bind variable
+	 * Function to replace query placeholders with bound variables
 	 *
-	 * @param string $str
-	 * @param array  $vals
+	 * @param string $query
+	 * @param array  $bindParams
 	 *
 	 * @return string
 	 */
-	protected function _replacePlaceHolders($str, $vals){
-		$i = 0;
-		$valcount = count($vals);
+	public static function replacePlaceHolders($query, $bindParams) {
+		$namedParams = [];
+		foreach ($bindParams as $key => $value){
+			if (!is_int($key)){
+				unset($bindParams[$key]);
+				$namedParams[ltrim($key, ':')] = $value;
+				continue;
+			}
+		}
+		ksort($bindParams);
 
-		while (strpos($str, '?') !== false && $i < $valcount){
-			$val = $vals[$i++];
-			if (is_object($val)){
-				$val = '[object]';
-			}
-			else if ($val === null){
-				$val = 'NULL';
-			}
-			if (is_string($val)){
-				$val = "'$val'";
-			}
+		/** @noinspection CallableParameterUseCaseInTypeContextInspection */
+		$query = preg_replace_callback('/:([a-z]+)/', function ($matches) use ($namedParams) {
+			return array_key_exists($matches[1], $namedParams) ? self::_bindValue($namedParams[$matches[1]]) : $matches[1];
+		}, $query);
 
-			$str = preg_replace('/\?/', $val, $str, 1);
+		foreach ($bindParams as $param){
+			/** @noinspection CallableParameterUseCaseInTypeContextInspection */
+			$query = preg_replace('/\?/', self::_bindValue($param), $query, 1);
 		}
 
-		return $str;
+		return $query;
+	}
+
+	/**
+	 * Convert a bound value to a readable string
+	 *
+	 * @param mixed $val
+	 *
+	 * @return string
+	 */
+	private static function _bindValue($val) {
+		switch (gettype($val)) {
+			case 'NULL':
+				$val = 'NULL';
+			break;
+			case 'string':
+				$val = "'".preg_replace('/(^|[^\'])\'/', "''", $val)."'";
+			break;
+			default:
+				$val = (string) $val;
+		}
+
+		return $val;
 	}
 
 	/**
@@ -270,11 +294,12 @@ class PostgresDb {
 	/**
 	 * Helper function to add variables into bind parameters array in bulk
 	 *
-	 * @param array $values Variable with values
+	 * @param array $values    Variable with values
+	 * @param bool  $ignoreKey Whether array keys should be ignored when binding
 	 */
-	protected function _bindParams($values){
+	protected function _bindParams($values, $ignoreKey = false){
 		foreach ($values as $key => $value){
-			$this->_bindParam($value, $key);
+			$this->_bindParam($value, $ignoreKey ? null : $key);
 		}
 	}
 
@@ -350,23 +375,19 @@ class PostgresDb {
 			switch ($operator) {
 				case 'NOT IN':
 				case 'IN':
-					$comparison = ' '.$operator.' (';
-					if (is_object($whereValue)){
-						$comparison .= $this->_buildPair('', $whereValue);
+					if (!is_array($whereValue)){
+						throw new \InvalidArgumentException(__METHOD__.' expects $whereValue to be an array when using IN/NOT IN');
 					}
-					else {
-						/** @var $whereValue array */
-						foreach ($whereValue as $k => $v){
-							$comparison .= '?, ';
-							$this->_bindParam($v,$k);
-						}
-					}
-					$this->_query .= rtrim($comparison, ', ').') ';
+
+					/** @var $whereValue array */
+					foreach ($whereValue as $v)
+						$this->_bindParam($v);
+					$this->_query .= " $operator (".implode(', ', array_fill(0, count($whereValue), '?')).') ';
 				break;
 				case 'NOT BETWEEN':
 				case 'BETWEEN':
 					$this->_query .= " $operator ? AND ? ";
-					$this->_bindParams($whereValue);
+					$this->_bindParams($whereValue, true);
 				break;
 				case 'NOT EXISTS':
 				case 'EXISTS':
@@ -583,7 +604,7 @@ class PostgresDb {
 		$this->_buildLimit($numRows);
 		$this->_alterQuery();
 
-		$this->_lastQuery = $this->_replacePlaceHolders($this->_query, $this->_bindParams);
+		$this->_lastQuery = self::replacePlaceHolders($this->_query, $this->_bindParams);
 
 		return $this->_prepareQuery();
 	}
@@ -890,7 +911,7 @@ class PostgresDb {
 		$joinType = strtoupper(trim($joinType));
 
 		if ($joinType && !in_array($joinType, $allowedTypes, true)){
-			throw new \RuntimeException(__METHOD__.' expects argument 3 to be a valid join type');
+			throw new RuntimeException(__METHOD__.' expects argument 3 to be a valid join type');
 		}
 
 		$joinTable = $this->_quoteTableName($joinTable);
@@ -952,7 +973,7 @@ class PostgresDb {
 	 */
 	protected function _execStatement($stmt){
 		$this->_lastQuery = $this->_bindParams !== null
-			? $this->_replacePlaceHolders($this->_query, $this->_bindParams)
+			? self::replacePlaceHolders($this->_query, $this->_bindParams)
 			: $this->_query;
 
 		try {

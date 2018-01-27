@@ -4,7 +4,7 @@ This project is a PostgreSQL version of [joshcam](https://github.com/joshcam)'s 
 
 ## Installation
 
-This class requires PHP 5.6 or 7+ to work. You can either place `PostgresDb.php` in your project and require/include it, or use [Composer](https://getcomposer.org/) (recommended)
+This class requires PHP 5.6 or 7+ to work. You can either place `PostgresDb.php` in your project and require/include it, or use [Composer](https://getcomposer.org) (recommended)
 
     composer require seinopsys/postgresql-database-class:^2.0
 
@@ -21,20 +21,27 @@ For a more in-depth description see [USAGE.md](USAGE.md)
 
  1. **`where()` and arrays**
 
-    From 2.0 onwards the following syntax for the `where` method has been deprecated in favor of using arrays to search multiple items using `IN`.
-
+    From 2.0 onwards the following syntax for the `where` method has been removed.
+    
     ```php
-    $Database->where('id', array('<=' => 1));
+    $Database->where('id', array('>=' => 1)); // WHERE id >= 1
     ```
-
-    Instead, use the 3rd parameter to specify an operator if `=` isn't what you want, like this:
+    
+    The new behavior expects a 1-dimensional array of values to use with an `IN` clause. The keys are ignored.
+    
+    ```php
+    $Database->where('id', array(1, 2, 3)); // WHERE id IN (1, 2, 3)
+	$Database->where('id', array('>=' => 1)); // WHERE id IN (1)
+    ```
+    
+    This removes the ability to use an array to specify a comparison operator and a value at the same time. Instead, use the 3rd parameter to specify an operator other than `=`, like this:
 
     ```php
     $Database->where('id', 1, '<=');
     ```
  2. **`orderBy()` default direction**
  
-     Since [the default](https://www.postgresql.org/docs/current/static/queries-order.html) in POstgreSQL is `ASC` I've updated the default sort order of said method to reflect that.
+     Since [the default](https://www.postgresql.org/docs/current/static/queries-order.html) in PostgreSQL is `ASC` I've updated the default sort order of said method to reflect that.
    
      You should check for any usages of the `orderBy()` method where the second parameter is not set, and set it to the old default: `DESC`.
    
@@ -49,7 +56,7 @@ For a more in-depth description see [USAGE.md](USAGE.md)
      |`column_name`|`column_name`|_✔️ No action needed_<br><small>These can safely be used as-is</small>|
      |`order`<br>`user`<br>`select`|`order`<br>`user`<br>`select`|_✔️ No action needed_<br><small>Keywords are automatically quoted</small>|
      |`áccénts`|`áccénts`|_✔️ No action needed_<br><small>They will still be quoted, but it should not affect the behavior</small>|
-     |`sp3cǐaŧ_¢h4r$`|`sp3cǐaŧ_¢h4r$`|_✔️ No action needed_<br>[<small>But why?</small>](https://media.giphy)|
+     |`sp3cǐaŧ_¢h4r$`|`sp3cǐaŧ_¢h4r$`|_✔️ No action needed_<br>[<small>But why?</small>](https://media.giphy.com/media/1M9fmo1WAFVK0/giphy.gif)|
      |`column_name`<br>`áccénts_ümläut_ëtc`|`Column_Name`<br>`Áccénts_Ümläut_Ëtc`|✖️ Use lowercase letters<br><small>The changes will now cause your column name to become quoted and refer to a column that does not exist.</small>|
      |`Column_Name`<br>`Áccénts`|`column_name`<br>`áccénts`|✖️ Use `Column_Name`/`Áccénts` instead<br><small>Column names with uppercase letters can only ever be accessed if the name is double-quoted. The changes will cause valid lowercase column names to be left unquoted, breaking this approach (if it even worked in the first place).</small>|
 
