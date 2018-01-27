@@ -1,6 +1,6 @@
 {
 	"name": "seinopsys/postgresql-database-class",
-	"description": "PHP wrapper class for PDO-based interaction with PostgreSQL databases, heavily based on joshcam/mysqli-database-class",
+	"description": "PHP wrapper class for PDO-based interaction with PostgreSQL databases, heavily based on ThingEngineer's MysqliDb class",
 	"license": "GPL-3.0-or-later",
 	"authors": [
 		{
