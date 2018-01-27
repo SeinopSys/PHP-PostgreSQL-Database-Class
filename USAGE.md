@@ -18,7 +18,7 @@ require "PostgresDb.php";
 $Database = new PostgresDb($database_name, $host, $username, $password);
 ```
 
-The class works with Composer's autoloading, so if you install through it you just need to require the `vendor/autoload.php` file. It's defined in the global namespace, so if you're using it from within a namespace, refer to it as `\PostgresDb` or use `use \PostgresDb` so yo ucan drop the backslash in a file.
+The class works with Composer's autoloading, so if you install through it you just need to require the `vendor/autoload.php` file. It's defined in the global namespace, so if you're using it from within a namespace, refer to it as `\PostgresDb` or use `use \PostgresDb;` at the top of the file so you can drop the backslash afterwards.
 
 By default, initializing the class does not immediately create a connection. To force a connection attempt, call:
 
