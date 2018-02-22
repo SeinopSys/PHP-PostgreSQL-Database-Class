@@ -881,8 +881,10 @@ class PostgresDb
         $this->_query = "INSERT INTO $table";
 
         $stmt = $this->_buildQuery(null, $insertData, $returnColumns);
-        $res = $this->_execStatement($stmt);
-        return $this->_returnWithReturning($res);
+        $res = $this->_execStatement($stmt, false);
+        $return = $this->_returnWithReturning($res);
+        $this->reset();
+        return $return;
     }
 
     /**
@@ -907,8 +909,10 @@ class PostgresDb
         $this->_query = "DELETE FROM $table";
 
         $stmt = $this->_buildQuery(null, null, $returnColumns);
-        $res = $this->_execStatement($stmt);
-        return $this->_returnWithReturning($res);
+        $res = $this->_execStatement($stmt, false);
+        $return = $this->_returnWithReturning($res);
+        $this->reset();
+        return $return;
     }
 
     /**
