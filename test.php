@@ -337,7 +337,6 @@ checkQuery('SELECT * FROM "users" ORDER BY id DESC LIMIT 1', 'ORDERBY_QUERY_MISM
 if (!isset($LastUser['id'])) {
     fail('ORDERBY_RETURNING_WRONG_DATA');
 }
-echo "\n\n\n", var_export($LastUser, true), "\n\n\n";
 if ($LastUser['id'] != 5) {
     fail('ORDERBY_RETURNING_WRONG_DATA');
 }
@@ -355,6 +354,7 @@ checkQuery('SELECT gender, COUNT(*) AS cnt FROM "users" GROUP BY gender ORDER BY
 if (!isset($GenderCount[0]['cnt']) || !isset($GenderCount[1]['cnt']) || !isset($GenderCount[0]['gender']) || !isset($GenderCount[1]['gender'])) {
     fail('GROUPBY_RETURNING_WRONG_DATA');
 }
+echo "\n\n\n". var_export($GenderCount, true). "\n\n\n";
 if ($GenderCount[0]['cnt'] !== 2 || $GenderCount[1]['cnt'] !== 1 || $GenderCount[0]['gender'] !== 'm' || $GenderCount[1]['gender'] !== 'f') {
     fail('GROUPBY_RETURNING_WRONG_DATA');
 }
