@@ -4,7 +4,7 @@ This project is a PostgreSQL version of [ThingEngineer](https://github.com/Thing
 
 ## Installation
 
-This class requires PHP 5.6 or 7+ to work. You can either place `PostgresDb.php` in your project and require/include it, or use [Composer](https://getcomposer.org) (recommended)
+This class requires PHP 5.4 or 7+ to work. You can either place `PostgresDb.php` in your project and require/include it, or use [Composer](https://getcomposer.org) (recommended)
 
     composer require seinopsys/postgresql-database-class:^2.0
 
