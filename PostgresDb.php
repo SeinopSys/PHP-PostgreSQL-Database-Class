@@ -881,7 +881,8 @@ class PostgresDb
         $this->_query = "INSERT INTO $table";
 
         $stmt = $this->_buildQuery(null, $insertData, $returnColumns);
-        return $this->_execStatement($stmt);
+        $res = $this->_execStatement($stmt);
+        return $this->_returnWithReturning($res);
     }
 
     /**
@@ -906,7 +907,8 @@ class PostgresDb
         $this->_query = "DELETE FROM $table";
 
         $stmt = $this->_buildQuery(null, null, $returnColumns);
-        return $this->_execStatement($stmt);
+        $res = $this->_execStatement($stmt);
+        return $this->_returnWithReturning($res);
     }
 
     /**
@@ -987,11 +989,12 @@ class PostgresDb
 
     /**
      * @param PDOStatement $stmt Statement to execute
+     * @param boolean      $reset
      *
-     * @return bool|array|mixed
+     * @return bool|mixed
      * @throws PDOException
      */
-    protected function _execStatement($stmt)
+    protected function _execStatement($stmt, $reset = true)
     {
         $this->_lastQuery = $this->_bindParams !== null
             ? self::replacePlaceHolders($this->_query, $this->_bindParams)
@@ -1018,8 +1021,9 @@ class PostgresDb
                 : $stmt->fetchAll($this->_fetchType);
         }
 
-        $result = $this->_returnWithReturning($result);
-        $this->reset();
+        if ($reset) {
+            $this->reset();
+        }
         return $result;
     }
 
