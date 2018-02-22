@@ -1058,6 +1058,7 @@ class PostgresDb
             }
 
             // If we got a single column to return then just return it
+            echo "\n\n", var_export($res, true), "\n\n";
             if (count($this->_returning) === 1) {
                 return array_values($res[0])[0];
             }
