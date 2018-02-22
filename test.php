@@ -337,7 +337,8 @@ checkQuery('SELECT * FROM "users" ORDER BY id DESC LIMIT 1', 'ORDERBY_QUERY_MISM
 if (!isset($LastUser['id'])) {
     fail('ORDERBY_RETURNING_WRONG_DATA');
 }
-if ($LastUser['id'] != 4) {
+echo "\n\n\n", var_export($LastUser, true), "\n\n\n";
+if ($LastUser['id'] != 5) {
     fail('ORDERBY_RETURNING_WRONG_DATA');
 }
 if (!is_int($LastUser['id'])) {
