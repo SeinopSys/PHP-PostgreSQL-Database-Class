@@ -56,22 +56,22 @@ $Database->get('users', 1);
 $Database->get('users', 1, 'id, name');
 
 // SELECT id, name FROM users LIMIT 2 OFFSET 1
-$Database->get('users', array(1,2), 'id, name');
+$Database->get('users', [1,2], 'id, name');
 ```
 
 Return format:
 
 ```php
-array(
-    array(
+[
+    [
         'id' => 2,
         'name' => 'Alex'
-    ),
-    array(
+    ],
+    [
         'id' => 3,
         'name' => 'Daniel'
-    )
-)
+    ]
+]
 ```
 
 Alternatively, you can use `getOne` to only select a single row. Returns `false` if no row is found.
@@ -87,10 +87,10 @@ $Database->getOne('users', 'id, name');
 Return format:
 
 ```php
-array(
+[
     'id' => 1,
     'name' => 'Sam'
-)
+]
 ```
 
 ### Where [`where()`]
@@ -106,10 +106,10 @@ $Database->where('"id" != 1')->getOne('users');
 $Database->where('id', 1, '!=')->getOne('users');
 
 // SELECT * FROM users LIMIT 1 WHERE "id" IN (1, 3)
-$Database->where('id', array(1, 3))->getOne('users');
+$Database->where('id', [1, 3])->getOne('users');
 
 // SELECT * FROM users LIMIT 1 WHERE "id" NOT IN (1, 3)
-$Database->where('id', array(1, 3), '!=')->getOne('users');
+$Database->where('id', [1, 3], '!=')->getOne('users');
 ```
 
 ### Join [`join()`]
@@ -157,23 +157,30 @@ $Database->groupBy('gender')->groupBy('othercol')->get('users');
 Returns `false` on failure and `true` if successful.
 
 ```php
-// INSERT INTO users ("name") VALUES ('Joe')
-$Database->insert('users', array('name' => 'Joe'));
+// INSERT INTO users ("name", gender) VALUES ('Joe', 'm')
+$Database->insert('users', ['name' => 'Joe', 'gender' => 'm']);
 ```
 
-|  id   |  name   |
-|-------|---------|
-| 1     | Sam     |
-| 2     | Alex    |
-| 3     | Daniel  |
-| **4** | **Joe** |
+|  id   |  name   | gender |
+|-------|---------|--------|
+| 1     | Sam     | m      |
+| 2     | Alex    | f      |
+| 3     | Daniel  | m      |
+| **4** | **Joe** | **m**  |
 
-You  can also ask for the values of inserted columns, in which case it'll return those instead of `true` if the insert is successful.
+You can also ask for the values of inserted columns, in which case it'll return those instead of `true` if the insert is successful. This is especially useful when you need the value of an index that's generated on the fly by Postgres.
 
 ```php
-// INSERT INTO users ("name") VALUES ('Joe') RETURNING "id"
-$id = $Database->insert('users',array('name' => 'Joe'),'id');
-echo $id; // 4
+// INSERT INTO users ("name") VALUES ('Joe') RETURNING id
+$id = $Database->insert('users', ['name' => 'Joe'], 'id');
+// $id === 4
+```
+
+```php
+// INSERT INTO users ("name") VALUES ('Joe') RETURNING id, "name"
+$return = $Database->insert('users', ['name' => 'Joe'], ['id', 'name']);
+//     or $Database->insert('users', ['name' => 'Joe'], 'id, name');
+// $return === ['id' => 4, 'name' => 'Joe']
 ```
 
 ### Update [`update()`]
@@ -182,30 +189,38 @@ Returns `false` on failure and `true` if successful.
 
 ```php
 // UPDATE users SET "name" = 'Dave' WHERE "id" = 1
-$Database->where('id', 1)->update('users',array('name' => 'Dave'));
+$Database->where('id', 1)->update('users', ['name' => 'Dave']);
 ```
 
-|  id   |   name   |
-|-------|----------|
-| **1** | **Dave** |
-| 2     | Alex     |
-| 3     | Daniel   |
-| 4     | Joe      |
+| id |   name   | gender |
+|----|----------|--------|
+| 1  | **Dave** | m      |
+| 2  | Alex     | f      |
+| 3  | Daniel   | m      |
+| 4  | Joe      | m      |
 
 ### Delete [`delete()`]
 
-Returns `false` on failure and `true` if successful. Cannot be used with `groupBy()`, `join()` and `orderBy()`. An optional second argument can be passed to create a `RETURNING`
+Returns `false` on failure and `true` if successful. Cannot be used with `groupBy()`, `join()` and `orderBy()`. An optional second argument can be passed to return columns from the deleted row, similar to `insert()`.
 
 ```php
-// DELETE FROM users WHERE "id" = 1
-$Database->where('id', 1)->delete('users');
+// DELETE FROM users WHERE "id" = 3
+$success = $Database->where('id', 3)->delete('users');
+// $success === true
 ```
 
-| id |  name  |
-|----|--------|
-| 1  | Dave   |
-| 2  | Alex   |
-| 4  | Joe    |
+```php
+// DELETE FROM users WHERE "id" = 3 RETURNING "name", gender
+$return = $Database->where('id', 3)->delete('users', ['name', 'gender']);
+//     or $Database->where('id', 3)->delete('users', 'name, gender');
+// $return === ['name' => 'Daniel', 'gender' => 'm']
+```
+
+| id |  name  | gender |
+|----|--------|--------|
+| 1  | Dave   | m      |
+| 2  | Alex   | f      |
+| 4  | Joe    | m      |
 
 ### Raw SQL queries [`query()`, `querySingle()`]
 
@@ -213,40 +228,48 @@ Executes the query exactly* as passed, for when it is far too complex to use the
 
 ```php
 // Query string only
-$Database->rawQuery("SELECT * FROM 'users' WHERE id = 4");
+$Database->rawQuery('SELECT * FROM users WHERE id = 4');
 
-// Using bound parameters
+// Using prepared statement parameters
 $id = 4;
-$Database->rawQuery("SELECT * FROM 'users' WHERE id = ?", array($id));
+$Database->rawQuery('SELECT * FROM users WHERE id = ? AND name = ?', [4, 'Joe']);
+$Database->rawQuery('SELECT * FROM users WHERE id = :id AND name = :who', [':id' => $id, ':who' => 'Joe']);
 ```
 
 Return format:
 
 ```php
-array(
-    array(
+[
+    [
         'id' => 4,
         'name' => 'Joe'
-    ),
-)
+    ],
+]
 ```
 
-If you want the power of a custom query, but also the convenience of getting the result as a single array instead of having to use `$result[0]` all the time (which may even trigger an error if no results are found and the value becomes `null`) you can use `querySingle` which returns only a single result, similar to how `getOne` works.
+If you want the power of a custom query, but also the convenience of getting the result as a single array instead of having to use `$result[0]` all the time (which may even trigger an error if no results are found and the value becomes `null`) you can use `querySingle` which only returns the first result, similar to how `getOne` works.
+
+```php
+[
+    'id' => 4,
+    'name' => 'Joe'
+]
+```
 
 ```php
 $Database->rawQuerySingle("SELECT * FROM 'users' WHERE id = 4");
 // Works the same way for bound parameters
 $id = 4;
-$Database->rawQuerySingle("SELECT * FROM 'users' WHERE id = ?", array($id));
+$Database->rawQuerySingle("SELECT * FROM 'users' WHERE id = ?", [$id]);
 ```
 
 Return format:
 
 ```php
-array(
+[
     'id' => 4,
     'name' => 'Joe'
-)
+]
 ```
 
 ### Informational methods
@@ -255,8 +278,9 @@ array(
 
 ```php
 $withWhere = $Database->where('"id" = 2');
-if ($withWhere->has('users'))
+if ($withWhere->has('users')) {
     $Database->getOne('users');
+}
 ```
 
 Instead of returning the user with the `id` equal to `2`, it'll return whatever row it finds first since the `where` call is no longer in effect.
@@ -288,7 +312,7 @@ $Database->where('"id" = 2')->has('users'); // true
 This will return the last query executed through the class where the placeholders have been replaced with actual values. While the class does its best to keep the SQL valid you should not rely on the returned value being a valid query. 
 
 ```php
-$Database->insert('users',array('name' => 'Sarah'))
+$Database->insert('users', ['name' => 'Sarah'])
 echo $Database->getLastQuery(); // INSERT INTO "users" ("name") VALUES ('Sarah')
 ```
 
@@ -298,7 +322,7 @@ This can be useful after a failed `insert`/`update` call, for example.
 
 ```php
 // Duplicated ID
-$Database->insert('users',array('id' => '1', 'name' => 'Fred'))
+$Database->insert('users', ['id' => '1', 'name' => 'Fred'])
 echo $Database->getLastError(); // #1062 - Duplicate entry '1' for key 'PRIMARY'
 ```
 
@@ -318,7 +342,8 @@ echo $Database->count; // 3
 With a simple wrapper class it's trivial to include a query counter if need be.
 
 ```php
-class PostgresDbWrapper extends PostgresDb {
+class PostgresDbWrapper extends PostgresDb
+{
     public $query_count = 0;
 
     /**
@@ -326,7 +351,8 @@ class PostgresDbWrapper extends PostgresDb {
      *
      * @return bool|array|object[]
      */
-    protected function _execStatement($stmt){
+    protected function _execStatement($stmt)
+    {
         $this->query_count++;
         return parent::_execStatement($stmt);
     }
@@ -337,27 +363,32 @@ class PostgresDbWrapper extends PostgresDb {
 
 The class contains two utility methods (`tableNameToClassName` and `setClass`) which allow for the creation of a wrapper that can force returned values into a class instead of an array. This allows for using both the array and class method simultaneously with minimal effort. An example of such a wrapper class is shown below.
 
-This assumes an autoloader is configured within the project which allows classes to be loaded on the fly as needed. This method will cause the autoloader to attempt loading the class within the `DB` namespace when `class_exists` is called. If it fails, a key is set on a private array. This prevents future checks for the existence of the same class to avoid significantly impacting the application's performance.
+This assumes an autoloader is configured within the project which allows classes to be loaded on the fly as needed. This method will cause the autoloader to attempt loading the class within the `Models` namespace when `class_exists` is called. If it fails, a key is set on a private array. This prevents future checks for the existence of the same class to avoid significantly impacting the application's performance.
 
 ```php
-class PostgresDbWrapper extends PostgresDb {
-    private $_nonexistantClassCache = array();
+class PostgresDbWrapper extends PostgresDb
+{
+    private $_nonexistantClassCache = [];
 
     /**
      * @param PDOStatement $stmt Statement to execute
      *
      * @return bool|array|object[]
      */
-    protected function _execStatement($stmt){
+    protected function _execStatement($stmt)
+    {
         $className = $this->tableNameToClassName();
-        if (isset($className) && empty($this->_nonexistantClassCache[$className])){
+        if (isset($className) && empty($this->_nonexistantClassCache[$className])) {
             try {
-                if (!class_exists("\\Models\\$className"))
+                if (!class_exists("\\Models\\$className")) {
                     throw new Exception();
+                }
 
                 $this->setClass("\\Models\\$className");
             }
-            catch (Exception $e){ $this->_nonexistantClassCache[$className] = true; }
+            catch (Exception $e) {
+                $this->_nonexistantClassCache[$className] = true;
+            }
         }
 
         return parent::_execStatement($stmt);

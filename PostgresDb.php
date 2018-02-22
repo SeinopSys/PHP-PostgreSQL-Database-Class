@@ -37,31 +37,27 @@ class PostgresDb
          *
          * @var array
          */
-        $_join = array(),
+        $_join = [],
         /**
          * An array that holds where conditions 'fieldName' => 'value'
          *
          * @var array
          */
-        $_where = array(),
+        $_where = [],
         /**
          * Dynamic type list for order by condition value
          */
-        $_orderBy = array(),
+        $_orderBy = [],
         /**
          * Dynamic type list for group by condition value
          */
-        $_groupBy = array(),
+        $_groupBy = [],
         /**
          * Dynamic array that holds a combination of where condition/table data value types and parameter references
          *
          * @var array|null
          */
         $_bindParams,
-        /**
-         * Name of the auto increment column
-         */
-        $_lastInsertId,
         /**
          * Variable which holds last statement error
          *
@@ -101,8 +97,16 @@ class PostgresDb
         $_errorMode = PDO::ERRMODE_WARNING,
         /**
          * List of keywords used for escaping column names, automatically populated on connection
+         *
+         * @var string[]
          */
-        $_sqlKeywords = [];
+        $_sqlKeywords = [],
+        /**
+         * List of columns to be returned after insert/delete
+         *
+         * @var string[]|null
+         */
+        $_returning;
 
     public
         /**
@@ -436,6 +440,31 @@ class PostgresDb
     }
 
     /**
+     * Abstraction method that will build the RETURNING clause
+     *
+     * @param string|string[]|null $returning What column(s) to return
+     *
+     * @throws InvalidArgumentException
+     * @throws RuntimeException
+     */
+    protected function _buildReturning($returning)
+    {
+        if ($returning === null) {
+            return;
+        }
+
+        if (!is_array($returning)) {
+            $returning = array_map('trim', explode(',', $returning));
+        }
+        $this->_returning = $returning;
+        $columns = [];
+        foreach ($returning as $column) {
+            $columns[] = $this->_quoteColumnName($column, true);
+        }
+        $this->_query .= ' RETURNING ' . implode(', ', $columns);
+    }
+
+    /**
      * @param mixed[] $tableData
      * @param string[] $tableColumns
      * @param bool $isInsert
@@ -542,48 +571,9 @@ class PostgresDb
     }
 
     /**
-     * Internal function to build and execute INSERT/REPLACE calls
-     *
-     * @param string $tableName The name of the table.
-     * @param array $insertData Data containing information for inserting into the DB.
-     * @param string $operation
-     * @param string|null $returnColumn What column to return after insert
-     *
-     * @return boolean|mixed Boolean indicating whether the insert query was completed successfully.
-     *                       If $returnColumn is true then returns the matching column from the data if it exists.
-     * @throws InvalidArgumentException
-     * @throws PDOException
-     * @throws RuntimeException
-     */
-    private function _buildInsert($tableName, $insertData, $operation, $returnColumn = null)
-    {
-        if ($this->_autoClassEnabled) {
-            $this->_tableName = $tableName;
-        }
-        $tableName = $this->_quoteTableName($tableName);
-        $this->_query = "$operation INTO $tableName";
-        if ($returnColumn !== null) {
-            $returnColumn = trim($returnColumn);
-        }
-        $stmt = $this->_buildQuery(null, $insertData, $returnColumn);
-
-        $res = $this->_execStatement($stmt);
-
-        if ($res === false || $this->count < 1) {
-            return false;
-        }
-
-        if (is_array($res) && !empty($res[0][$returnColumn])) {
-            return $res[0][$returnColumn];
-        }
-
-        return true;
-    }
-
-    /**
      * Abstraction method that will build the LIMIT part of the WHERE statement
      *
-     * @param int|int[] $numRows An array to define SQL limit in format array($limit,$offset) or just $limit
+     * @param int|int[] $numRows An array to define SQL limit in format [$limit,$offset] or just $limit
      */
     protected function _buildLimit($numRows)
     {
@@ -603,7 +593,7 @@ class PostgresDb
      * any passed update data, and the desired rows.
      * It then builds the SQL query.
      *
-     * @param int|int[] $numRows Array to define SQL limit in format array($limit,$offset) or just $limit
+     * @param int|int[] $numRows Array to define SQL limit in format [$limit,$offset] or just $limit
      * @param array $tableData Should contain an array of data for updating the database.
      * @param string|string[]|null $returning What column(s) to return after inserting
      *
@@ -616,15 +606,7 @@ class PostgresDb
         $this->_buildJoin();
         $this->_buildInsertQuery($tableData);
         $this->_buildWhere();
-        if ($returning !== null) {
-            if (!is_array($returning)) {
-                $returning = explode(',', $returning);
-            }
-            $this->_query .= ' RETURNING ';
-            foreach ($returning as $column) {
-                $this->_query .= $this->_quoteColumnName($column, true);
-            }
-        }
+        $this->_buildReturning($returning);
         $this->_buildGroupBy();
         $this->_buildOrderBy();
         $this->_buildLimit($numRows);
@@ -647,7 +629,6 @@ class PostgresDb
      */
     public function query($query, $bindParams = null)
     {
-        $params = array(null); // Create the empty 0 index
         $this->_query = $query;
         $this->_alterQuery();
 
@@ -712,7 +693,7 @@ class PostgresDb
         if (count($this->_where) === 0) {
             $cond = '';
         }
-        $this->_where[] = array($cond, $whereProp, strtoupper($operator), $whereValue);
+        $this->_where[] = [$cond, $whereProp, strtoupper($operator), $whereValue];
 
         return $this;
     }
@@ -784,7 +765,7 @@ class PostgresDb
      * A convenient SELECT * function.
      *
      * @param string $tableName The name of the database table to work with.
-     * @param int|int[] $numRows Array to define SQL limit in format array($limit,$offset) or just $limit
+     * @param int|int[] $numRows Array to define SQL limit in format [$limit,$offset] or just $limit
      * @param string|array $columns
      *
      * @return array Contains the returned rows from the select query.
@@ -878,36 +859,46 @@ class PostgresDb
     }
 
     /**
-     * Insert method to add new row
+     * Insert method to add a new row
      *
      * @param string $tableName The name of the table.
      * @param array $insertData Data containing information for inserting into the DB.
-     * @param string|null $returnColumn Which column to return
+     * @param string|string[]|null $returnColumns Which columns to return
      *
-     * @return boolean Boolean indicating whether the insert query was completed successfully.
+     * @return mixed Boolean if $returnColumns is not specified, the returned columns' values otherwise
      * @throws InvalidArgumentException
      * @throws PDOException
      * @throws RuntimeException
      */
-    public function insert($tableName, $insertData, $returnColumn = null)
+    public function insert($tableName, $insertData, $returnColumns = null)
     {
         $this->disableAutoClass();
 
-        return $this->_buildInsert($tableName, $insertData, 'INSERT', $returnColumn);
+        if ($this->_autoClassEnabled) {
+            $this->_tableName = $tableName;
+        }
+        $table = $this->_quoteTableName($tableName);
+        $this->_query = "INSERT INTO $table";
+
+        $stmt = $this->_buildQuery(null, $insertData, $returnColumns);
+        $res = $this->_execStatement($stmt, false);
+        $return = $this->_returnWithReturning($res);
+        $this->reset();
+        return $return;
     }
 
     /**
-     * Delete query. Call the "where" method first.
+     * Delete query. Unless you want to "truncate" the table you should first @see where
      *
      * @param string $tableName The name of the database table to work with.
-     * @param string|null $returnColumn Which column to return
+     * @param string|string[]|null $returnColumns Which columns to return
      *
-     * @return boolean
+     * @return mixed Boolean if $returnColumns is not specified, the returned columns' values otherwise
      * @throws InvalidArgumentException
      * @throws PDOException
      * @throws RuntimeException
      */
-    public function delete($tableName, $returnColumn = null)
+    public function delete($tableName, $returnColumns = null)
     {
         if (!empty($this->_join) || !empty($this->_orderBy) || !empty($this->_groupBy)) {
             throw new RuntimeException(__METHOD__ . ' cannot be used with JOIN, ORDER BY or GROUP BY');
@@ -917,19 +908,11 @@ class PostgresDb
         $table = $this->_quoteTableName($tableName);
         $this->_query = "DELETE FROM $table";
 
-        $stmt = $this->_buildQuery(null, null, $returnColumn);
-
-        $res = $this->_execStatement($stmt);
-
-        if ($res === false || $this->count < 1) {
-            return false;
-        }
-
-        if (is_array($res) && !empty($res[0][$returnColumn])) {
-            return $res[0][$returnColumn];
-        }
-
-        return true;
+        $stmt = $this->_buildQuery(null, null, $returnColumns);
+        $res = $this->_execStatement($stmt, false);
+        $return = $this->_returnWithReturning($res);
+        $this->reset();
+        return $return;
     }
 
     /**
@@ -947,7 +930,7 @@ class PostgresDb
      */
     public function join($joinTable, $joinCondition, $joinType = '', $disableAutoClass = true)
     {
-        $allowedTypes = array('LEFT', 'RIGHT', 'OUTER', 'INNER', 'LEFT OUTER', 'RIGHT OUTER');
+        $allowedTypes = ['LEFT', 'RIGHT', 'OUTER', 'INNER', 'LEFT OUTER', 'RIGHT OUTER'];
         $joinType = strtoupper(trim($joinType));
 
         if ($joinType && !in_array($joinType, $allowedTypes, true)) {
@@ -955,7 +938,7 @@ class PostgresDb
         }
 
         $joinTable = $this->_quoteTableName($joinTable);
-        $this->_join[] = array($joinType, $joinTable, $joinCondition);
+        $this->_join[] = [$joinType, $joinTable, $joinCondition];
 
         if ($disableAutoClass) {
             $this->disableAutoClass();
@@ -1009,12 +992,13 @@ class PostgresDb
     }
 
     /**
-     * @param PDOStatement $stmt Statement to execute
+     * @param PDOStatement $stmt  Statement to execute
+     * @param boolean      $reset Whether the object should be reset (must be done manually if set to false)
      *
-     * @return bool|array|mixed
+     * @return bool|mixed
      * @throws PDOException
      */
-    protected function _execStatement($stmt)
+    protected function _execStatement($stmt, $reset = true)
     {
         $this->_lastQuery = $this->_bindParams !== null
             ? self::replacePlaceHolders($this->_query, $this->_bindParams)
@@ -1040,8 +1024,10 @@ class PostgresDb
                 ? $stmt->fetchAll($this->_fetchType, $this->_fetchArg)
                 : $stmt->fetchAll($this->_fetchType);
         }
-        $this->reset();
 
+        if ($reset) {
+            $this->reset();
+        }
         return $result;
     }
 
@@ -1051,13 +1037,42 @@ class PostgresDb
         $this->_tableName = null;
         $this->_fetchType = PDO::FETCH_ASSOC;
         $this->_fetchArg = null;
-        $this->_where = array();
-        $this->_join = array();
-        $this->_orderBy = array();
-        $this->_groupBy = array();
-        $this->_bindParams = array();
+        $this->_where = [];
+        $this->_join = [];
+        $this->_orderBy = [];
+        $this->_groupBy = [];
+        $this->_bindParams = [];
         $this->_query = null;
-        $this->_lastInsertId = null;
+        $this->_returning = null;
+    }
+
+    /**
+     * Returns a boolean value if no data needs to be returned, otherwise returns the requested data
+     *
+     * @param mixed $res Result of an executed statement
+     * @return bool|mixed
+     */
+    protected function _returnWithReturning($res)
+    {
+        if ($res === false || $this->count < 1) {
+            return false;
+        }
+
+        if ($this->_returning !== null) {
+            if (!is_array($res)) {
+                return false;
+            }
+
+            // If we got a single column to return then just return it
+            if (count($this->_returning) === 1) {
+                return array_values($res[0])[0];
+            }
+
+            // If we got multiple, return the entire array
+            return $res[0];
+        }
+
+        return true;
     }
 
     /**
@@ -1219,8 +1234,7 @@ class PostgresDb
      */
     public function rawQuery($query, $bindParams = null)
     {
-        trigger_error(__METHOD__ . ' has been renamed to query, please update your code accordingly',
-            E_USER_DEPRECATED);
+        trigger_error(__METHOD__ . ' has been renamed to query, please update your code accordingly', E_USER_DEPRECATED);
 
         return $this->query($query, $bindParams);
     }
@@ -1237,8 +1251,7 @@ class PostgresDb
      */
     public function rawQuerySingle($query, $bindParams = null)
     {
-        trigger_error(__METHOD__ . ' has been renamed to querySingle, please update your code accordingly',
-            E_USER_DEPRECATED);
+        trigger_error(__METHOD__ . ' has been renamed to querySingle, please update your code accordingly', E_USER_DEPRECATED);
 
         return $this->querySingle($query, $bindParams);
     }
