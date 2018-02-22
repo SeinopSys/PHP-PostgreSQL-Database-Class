@@ -28,7 +28,7 @@ $Database->pdo();
 
 This will create (and return) the internal PDO object used by the class and simultaneously attempts to connect to the database. Initial connection errors can be caught by using `try…catch` but by default the script uses `PDO::ERRMODE_WARNING` for further errors.
 
-If you'd prefer exceptions to be thrown instead, or if you like to live dangerously and want to silence all errors, you can use the chainable `setPDOErrmode()` methodby passing any of the `PDO::ERRMODE_*` constants both before and after the connection has been made.
+If you'd prefer exceptions to be thrown instead, or if you like to live dangerously and want to silence all errors, you can use the chainable `setPDOErrmode()` method by passing any of the `PDO::ERRMODE_*` constants both before and after the connection has been made.
 
 ```php
 // Before connection
@@ -251,7 +251,7 @@ array(
 
 ### Informational methods
 
-**Note:** These will reset the object, so the following will **NOT** work as expeced:
+**Note:** These will reset the object, so the following will **NOT** work as expected:
 
 ```php
 $withWhere = $Database->where('"id" = 2');
@@ -337,7 +337,7 @@ class PostgresDbWrapper extends PostgresDb {
 
 The class contains two utility methods (`tableNameToClassName` and `setClass`) which allow for the creation of a wrapper that can force returned values into a class instead of an array. This allows for using both the array and class method simultaneously with minimal effort. An example of such a wrapper class is shown below.
 
-This assumes an autoloader is configured within the project which allows classes to be loaded on the fly as needed. This method will cause the autoloader to attempt loading the class within the `DB` namespace when `class_exists` is called. If it fails, a key is set on a private array. This prevents future checks for the existence of the same class to avoid significantly impacting the application's performace.
+This assumes an autoloader is configured within the project which allows classes to be loaded on the fly as needed. This method will cause the autoloader to attempt loading the class within the `DB` namespace when `class_exists` is called. If it fails, a key is set on a private array. This prevents future checks for the existence of the same class to avoid significantly impacting the application's performance.
 
 ```php
 class PostgresDbWrapper extends PostgresDb {

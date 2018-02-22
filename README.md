@@ -45,11 +45,11 @@ For a more in-depth description see [USAGE.md](USAGE.md)
    
      You should check for any usages of the `orderBy()` method where the second parameter is not set, and set it to the old default: `DESC`.
    
- 3. **Column name transofrmation changes**
+ 3. **Column name transformation changes**
  
      Starting with version `2.0` column names are escaped/handled differently.  The [PostgreSQL docs](https://www.postgresql.org/docs/current/static/sql-syntax-lexical.html#SQL-SYNTAX-IDENTIFIERS) state that all column names are lowercase by default when unquoted, but when quoted the casing should be preserved. The old version of the library converted column names to lowercase in some cases but not in others, leading to inconsistencies.
      
-     A uniform escape function has been introduced internally for column names which causes anything that doesn't fit the unquoted restrictions (keywords & uppercase/invalid characters) will cause the column names to be quoted. Check the examples below to see if you need to make any changes based on how you refer to databse columns in your code.
+     A uniform escape function has been introduced internally for column names which causes anything that doesn't fit the unquoted restrictions (keywords & uppercase/invalid characters) will cause the column names to be quoted. Check the examples below to see if you need to make any changes based on how you refer to database columns in your code.
      
      | Database column | Referred to as (in code) | Code change |
      |-----------------|--------------------------|--------|
@@ -66,4 +66,4 @@ For a more in-depth description see [USAGE.md](USAGE.md)
     
  5. **`query()` removal, `rawQuery()`+`rawQuerySingle()` rename & behavior change**
   
-    The `query()` method was ambigous and there was no point in keeping it around in its original form, so the `rawQuery*()` methods have dropped the `raw` prefix and are now simply called `query()` and `querySingle()`. The old method names have been taged with `@deprecated` and will now emit `E_USER_DEPRECATED` errors when run.
+    The `query()` method was ambiguous and there was no point in keeping it around in its original form, so the `rawQuery*()` methods have dropped the `raw` prefix and are now simply called `query()` and `querySingle()`. The old method names have been tagged with `@deprecated` and will now emit `E_USER_DEPRECATED` errors when run.
