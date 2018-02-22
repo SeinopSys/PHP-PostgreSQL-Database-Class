@@ -1017,9 +1017,10 @@ class PostgresDb
                 ? $stmt->fetchAll($this->_fetchType, $this->_fetchArg)
                 : $stmt->fetchAll($this->_fetchType);
         }
-        $this->reset();
 
-        return $this->_returnWithReturning($result);
+        $result = $this->_returnWithReturning($result);
+        $this->reset();
+        return $result;
     }
 
     public function reset()
