@@ -247,8 +247,7 @@ if ($name !== 'Anna') {
 }
 // Check insert with returning multiple columns
 $return = $Database->insert('users', ['name' => 'Jason', 'gender' => 'm'], 'name, gender');
-checkQuery('INSERT INTO "users" ("name", gender) VALUES (\'Jason\', \'m\') RETURNING "name", gender',
-    'INSERT_QUERY_MISMATCH');
+checkQuery('INSERT INTO "users" ("name", gender) VALUES (\'Jason\', \'m\') RETURNING "name", gender', 'INSERT_QUERY_MISMATCH');
 if (!is_array($return)) {
     fail('INSERT_RETURN_WRONG_DATA_TYPE_ARRAY');
 }
