@@ -12,4 +12,5 @@ addons:
   postgresql: "9.6"
 before_script:
   - psql -c 'CREATE DATABASE test;' -U postgres
+  - composer install
 script: php -f test.php

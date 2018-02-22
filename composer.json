@@ -11,7 +11,9 @@
 		}
 	],
 	"require": {
-		"php": ">=5.6"
+		"php": ">=5.4",
+		"ext-pdo": "*",
+		"ext-pdo_pgsql": "*"
 	},
 	"autoload": {
 		"files": ["PostgresDb.php"]
