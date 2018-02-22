@@ -230,6 +230,7 @@ if (!is_int($Users[0]['id'])) {
 // Check insert with returning integer
 $id = $Database->insert('users', ['name' => 'Jon', 'gender' => 'm'], 'id');
 checkQuery('INSERT INTO "users" ("name", gender) VALUES (\'Jon\', \'m\') RETURNING id', 'INSERT_QUERY_MISMATCH');
+echo "\n\n", var_export($id, true), "\n\n";
 if (!is_int($id)) {
     fail('INSERT_RETURN_WRONG_DATA_TYPE_INT');
 }

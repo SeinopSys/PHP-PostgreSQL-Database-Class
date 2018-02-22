@@ -875,12 +875,11 @@ class PostgresDb
         if ($this->_autoClassEnabled) {
             $this->_tableName = $tableName;
         }
-        $tableName = $this->_quoteTableName($tableName);
-        $this->_query = "INSERT INTO $tableName";
+        $table = $this->_quoteTableName($tableName);
+        $this->_query = "INSERT INTO $table";
+
         $stmt = $this->_buildQuery(null, $insertData, $returnColumns);
-
         $res = $this->_execStatement($stmt);
-
         return $this->_returnWithReturning($res);
     }
 
@@ -906,9 +905,7 @@ class PostgresDb
         $this->_query = "DELETE FROM $table";
 
         $stmt = $this->_buildQuery(null, null, $returnColumns);
-
         $res = $this->_execStatement($stmt);
-
         return $this->_returnWithReturning($res);
     }
 
@@ -1058,7 +1055,6 @@ class PostgresDb
             }
 
             // If we got a single column to return then just return it
-            echo "\n\n", var_export($res, true), "\n\n";
             if (count($this->_returning) === 1) {
                 return array_values($res[0])[0];
             }
