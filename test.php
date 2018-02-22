@@ -337,7 +337,7 @@ checkQuery('SELECT * FROM "users" ORDER BY id DESC LIMIT 1', 'ORDERBY_QUERY_MISM
 if (!isset($LastUser['id'])) {
     fail('ORDERBY_RETURNING_WRONG_DATA');
 }
-if ($LastUser['id'] != 3) {
+if ($LastUser['id'] != 4) {
     fail('ORDERBY_RETURNING_WRONG_DATA');
 }
 if (!is_int($LastUser['id'])) {
