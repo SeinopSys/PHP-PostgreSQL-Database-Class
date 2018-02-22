@@ -60,6 +60,8 @@ $_ = [
     'DELETE_WHERE_DELETING_WRONG_ROWS' => 0xA01,
     'DELETE_NOT_DELETING' => 0xA02,
     'DELETE_QUERY_MISMATCH' => 0xA03,
+    'DELETE_RETURNING_WRONG_DATA' => 0xA04,
+    'DELETE_RETURNING_WRONG_DATA_TYPE_STRING' => 0xA05,
 
     'JOIN_QUERY_MISMATCH' => 0xB00,
     'JOIN_QUERY_ALIAS_MISMATCH' => 0xB01,
@@ -354,9 +356,7 @@ checkQuery('SELECT gender, COUNT(*) AS cnt FROM "users" GROUP BY gender ORDER BY
 if (!isset($GenderCount[0]['cnt']) || !isset($GenderCount[1]['cnt']) || !isset($GenderCount[0]['gender']) || !isset($GenderCount[1]['gender'])) {
     fail('GROUPBY_RETURNING_WRONG_DATA');
 }
-echo "\n\n\n". var_export($GenderCount, true). "\n\n\n";
-exit(1);
-if ($GenderCount[0]['cnt'] !== 2 || $GenderCount[1]['cnt'] !== 1 || $GenderCount[0]['gender'] !== 'm' || $GenderCount[1]['gender'] !== 'f') {
+if ($GenderCount[0]['cnt'] !== 3 || $GenderCount[1]['cnt'] !== 1 || $GenderCount[0]['gender'] !== 'm' || $GenderCount[1]['gender'] !== 'f') {
     fail('GROUPBY_RETURNING_WRONG_DATA');
 }
 
@@ -431,6 +431,16 @@ if ($Database->has('users')) {
 // Array
 $Database->where('id', [3, 4])->delete('users');
 checkQuery('DELETE FROM "users" WHERE id IN (3, 4)', 'DELETE_QUERY_MISMATCH');
+// Returning data
+$return = $Database->where('id', 2)->delete('users', ['name','gender']);
+checkQuery('DELETE FROM "users" WHERE id = 2', 'DELETE_QUERY_MISMATCH');
+if (!is_array($return)) {
+    fail('DELETE_RETURNING_WRONG_DATA');
+}
+if (!is_string($return['name']) || !is_string($return['gender'])) {
+    fail('DELETE_RETURNING_WRONG_DATA_TYPE_STRING');
+}
+
 
 # join() Checks
 $Database->query('CREATE TABLE "userdata" (id SERIAL NOT NULL, somevalue INTEGER)');
