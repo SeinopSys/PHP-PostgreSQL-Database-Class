@@ -457,7 +457,6 @@ class PostgresDb
             $returning = array_map('trim', explode(',', $returning));
         }
         $this->_returning = $returning;
-        echo "\n\n", var_export($this->_returning, true), "\n\n";
         $columns = [];
         foreach ($returning as $column) {
             $columns[] = $this->_quoteColumnName($column, true);
@@ -882,8 +881,7 @@ class PostgresDb
         $this->_query = "INSERT INTO $table";
 
         $stmt = $this->_buildQuery(null, $insertData, $returnColumns);
-        $res = $this->_execStatement($stmt);
-        return $this->_returnWithReturning($res);
+        return $this->_execStatement($stmt);
     }
 
     /**
@@ -908,8 +906,7 @@ class PostgresDb
         $this->_query = "DELETE FROM $table";
 
         $stmt = $this->_buildQuery(null, null, $returnColumns);
-        $res = $this->_execStatement($stmt);
-        return $this->_returnWithReturning($res);
+        return $this->_execStatement($stmt);
     }
 
     /**
@@ -1022,7 +1019,7 @@ class PostgresDb
         }
         $this->reset();
 
-        return $result;
+        return $this->_returnWithReturning($result);
     }
 
     public function reset()
@@ -1051,14 +1048,13 @@ class PostgresDb
         if ($res === false || $this->count < 1) {
             return false;
         }
-        echo "\n\n", var_export($this->_returning, true), "\n\n";
+
         if ($this->_returning !== null) {
             if (!is_array($res)) {
                 return false;
             }
 
             // If we got a single column to return then just return it
-             echo "\n\nCount: ", count($this->_returning), "\n\n";
             if (count($this->_returning) === 1) {
                 return array_values($res[0])[0];
             }
