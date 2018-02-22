@@ -432,14 +432,15 @@ if ($Database->has('users')) {
 $Database->where('id', [3, 4])->delete('users');
 checkQuery('DELETE FROM "users" WHERE id IN (3, 4)', 'DELETE_QUERY_MISMATCH');
 // Returning data
-$return = $Database->where('id', 2)->delete('users', ['name','gender']);
-checkQuery('DELETE FROM "users" WHERE id = 2 RETURNING "name", gender', 'DELETE_QUERY_MISMATCH');
+$Database->insert('users', ['id' => 10, 'name' => 'Ada', 'gender' => 'f']);
+$return = $Database->where('id', 10)->delete('users', ['name','gender']);
+checkQuery('DELETE FROM "users" WHERE id = 10 RETURNING "name", gender', 'DELETE_QUERY_MISMATCH');
 if (!is_array($return)) {
     echo "\n\n\n\n".var_export($return)."\n\n\n\n";
     exit(1);
     fail('DELETE_RETURNING_WRONG_DATA');
 }
-if (!is_string($return['name']) || !is_string($return['gender'])) {
+if (!isset($return['name'], $return['gender']) || $return['name'] !== 'Ada' || $return['gender'] !== 'f') {
     fail('DELETE_RETURNING_WRONG_DATA_TYPE_STRING');
 }
 
