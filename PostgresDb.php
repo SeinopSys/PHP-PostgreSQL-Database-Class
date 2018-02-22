@@ -103,8 +103,10 @@ class PostgresDb
         $_sqlKeywords = [],
         /**
          * List of columns to be returned after insert/delete
+         *
+         * @var string[]|null
          */
-        $_returning = null;
+        $_returning;
 
     public
         /**
@@ -455,6 +457,7 @@ class PostgresDb
             $returning = array_map('trim', explode(',', $returning));
         }
         $this->_returning = $returning;
+        echo "\n\n", var_export($this->_returning, true), "\n\n";
         $columns = [];
         foreach ($returning as $column) {
             $columns[] = $this->_quoteColumnName($column, true);
