@@ -452,7 +452,7 @@ class PostgresDb
         }
 
         if (!is_array($returning)) {
-            $returning = explode(',', $returning);
+            $returning = array_map('trim', explode(',', $returning));
         }
         $this->_returning = $returning;
         $columns = [];
@@ -876,11 +876,8 @@ class PostgresDb
             $this->_tableName = $tableName;
         }
         $tableName = $this->_quoteTableName($tableName);
-        $this->_query = "$operation INTO $tableName";
-        if ($returnColumn !== null) {
-            $returnColumn = trim($returnColumn);
-        }
-        $stmt = $this->_buildQuery(null, $insertData, $returnColumn);
+        $this->_query = "INSERT INTO $tableName";
+        $stmt = $this->_buildQuery(null, $insertData, $returnColumns);
 
         $res = $this->_execStatement($stmt);
 
