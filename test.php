@@ -398,7 +398,7 @@ if (strpos($Database->getLastError(), 'duplicate key value violates unique const
 # count() Re-check
 // Call
 $Count = $Database->count('users');
-if ($Count !== 3) {
+if ($Count !== 4) {
     fail('COUNT_RETURNING_WRONG_DATA');
 }
 
