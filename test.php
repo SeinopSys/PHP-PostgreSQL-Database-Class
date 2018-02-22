@@ -435,6 +435,8 @@ checkQuery('DELETE FROM "users" WHERE id IN (3, 4)', 'DELETE_QUERY_MISMATCH');
 $return = $Database->where('id', 2)->delete('users', ['name','gender']);
 checkQuery('DELETE FROM "users" WHERE id = 2 RETURNING "name", gender', 'DELETE_QUERY_MISMATCH');
 if (!is_array($return)) {
+    echo "\n\n\n\n".var_export($return)."\n\n\n\n";
+    exit(1);
     fail('DELETE_RETURNING_WRONG_DATA');
 }
 if (!is_string($return['name']) || !is_string($return['gender'])) {
