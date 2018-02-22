@@ -992,8 +992,8 @@ class PostgresDb
     }
 
     /**
-     * @param PDOStatement $stmt Statement to execute
-     * @param boolean      $reset
+     * @param PDOStatement $stmt  Statement to execute
+     * @param boolean      $reset Whether the object should be reset (must be done manually if set to false)
      *
      * @return bool|mixed
      * @throws PDOException
