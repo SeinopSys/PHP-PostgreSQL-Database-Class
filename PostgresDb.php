@@ -227,7 +227,7 @@ class PostgresDb
         try {
             $stmt = $this->pdo()->prepare($this->_query);
         } catch (PDOException $e) {
-            throw new RuntimeException("Problem preparing query ($this->_query) " . $e->getMessage(), $e);
+            throw new RuntimeException("Problem preparing query ($this->_query) " . $e->getMessage(), $e->getCode());
         }
 
         return $stmt;
