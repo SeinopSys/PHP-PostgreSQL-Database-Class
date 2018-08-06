@@ -227,7 +227,7 @@ class PostgresDb
         try {
             $stmt = $this->pdo()->prepare($this->_query);
         } catch (PDOException $e) {
-            throw new RuntimeException("Problem preparing query ($this->_query) " . $e->getMessage(), $e);
+            throw new RuntimeException("Problem preparing query ($this->_query): " . $e->getMessage(), $e->getCode(), $e);
         }
 
         return $stmt;
@@ -738,7 +738,7 @@ class PostgresDb
         $orderByColumn = $this->_quoteColumnName($orderByColumn);
 
         if (!is_string($orderByDirection) || !preg_match('~^(ASC|DESC)~', $orderByDirection)) {
-            throw new RuntimeException('Wrong order direction ' . $orderByDirection . ' on field ');
+            throw new RuntimeException('Wrong order direction ' . $orderByDirection . ' on field ' . $orderByColumn);
         }
 
         $this->_orderBy[$orderByColumn] = $orderByDirection;
@@ -952,7 +952,7 @@ class PostgresDb
      *
      * @param string $table Table name to check
      *
-     * @returns boolean True if table exists
+     * @return boolean True if table exists
      * @throws PDOException
      * @throws RuntimeException
      */
@@ -992,8 +992,8 @@ class PostgresDb
     }
 
     /**
-     * @param PDOStatement $stmt  Statement to execute
-     * @param boolean      $reset Whether the object should be reset (must be done manually if set to false)
+     * @param PDOStatement $stmt Statement to execute
+     * @param boolean $reset Whether the object should be reset (must be done manually if set to false)
      *
      * @return bool|mixed
      * @throws PDOException
