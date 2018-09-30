@@ -19,7 +19,7 @@ class PostgresDb
          *
          * @var PDO
          */
-        $_conn,
+        $_connection,
         /**
          * The SQL query to be prepared and executed
          *
@@ -126,7 +126,15 @@ class PostgresDb
 
     const ORDERBY_RAND = 'rand()';
 
-    public function __construct($db, $host = DB_HOST, $user = DB_USER, $pass = DB_PASS)
+    /**
+     * PostgresDb constructor
+     *
+     * @param string $db
+     * @param string $host
+     * @param string $user
+     * @param string $pass
+     */
+    public function __construct($db = '', $host = '', $user = '', $pass = '')
     {
         $this->_connectionString = "pgsql:host=$host user=$user password=$pass dbname=$db options='--client_encoding=UTF8'";
     }
@@ -140,7 +148,7 @@ class PostgresDb
     protected function _connect()
     {
         $this->setConnection(new PDO($this->_connectionString));
-        $this->_conn->setAttribute(PDO::ATTR_ERRMODE, $this->_errorMode);
+        $this->_connection->setAttribute(PDO::ATTR_ERRMODE, $this->_errorMode);
     }
 
     /**
@@ -148,18 +156,17 @@ class PostgresDb
      * @throws RuntimeException
      * @throws PDOException
      */
-    public function pdo()
+    public function getConnection()
     {
-        if (!$this->_conn) {
+        if (!$this->_connection) {
             $this->_connect();
         }
 
-        return $this->_conn;
+        return $this->_connection;
     }
 
     /**
      * Allows passing any PDO object to the class, e.g. one initiated by a different library
-     * Only use a different connection with this class if you know what you're doing
      *
      * @param PDO $PDO
      *
@@ -168,7 +175,7 @@ class PostgresDb
      */
     public function setConnection(PDO $PDO)
     {
-        $this->_conn = $PDO;
+        $this->_connection = $PDO;
         $keywords = $this->query('SELECT word FROM pg_get_keywords()');
         foreach ($keywords as $key) {
             $this->_sqlKeywords[strtolower($key['word'])] = true;
@@ -176,15 +183,16 @@ class PostgresDb
     }
 
     /**
-     * Alias of $this->pdo
+     * @deprecated Use getConnection instead
      *
      * @return PDO
      * @throws PDOException
      * @throws RuntimeException
      */
-    public function getConnection()
+    public function pdo()
     {
-        return $this->pdo();
+        trigger_error('The pdo() method has been deprecated, please use getConnection() instead', E_USER_DEPRECATED);
+        return $this->getConnection();
     }
 
     /**
@@ -198,8 +206,8 @@ class PostgresDb
     public function setPDOErrmode($errmode)
     {
         $this->_errorMode = $errmode;
-        if ($this->_conn) {
-            $this->_conn->setAttribute(PDO::ATTR_ERRMODE, $this->_errorMode);
+        if ($this->_connection) {
+            $this->_connection->setAttribute(PDO::ATTR_ERRMODE, $this->_errorMode);
         }
 
         return $this;
@@ -225,7 +233,7 @@ class PostgresDb
     protected function _prepareQuery()
     {
         try {
-            $stmt = $this->pdo()->prepare($this->_query);
+            $stmt = $this->getConnection()->prepare($this->_query);
         } catch (PDOException $e) {
             throw new RuntimeException("Problem preparing query ($this->_query): " . $e->getMessage(), $e->getCode(), $e);
         }
@@ -1190,7 +1198,7 @@ class PostgresDb
      */
     public function getLastError()
     {
-        if (!$this->_conn) {
+        if (!$this->_connection) {
             return 'No connection has been made yet';
         }
 
@@ -1261,8 +1269,8 @@ class PostgresDb
      */
     public function __destruct()
     {
-        if ($this->_conn) {
-            $this->_conn = null;
+        if ($this->_connection) {
+            $this->_connection = null;
         }
     }
 }

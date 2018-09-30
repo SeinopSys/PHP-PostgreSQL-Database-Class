@@ -12,7 +12,7 @@ This class requires PHP 5.4 or 7+ to work. You can either place `PostgresDb.php`
 
 ```php
 require "PostgresDb.php";
-$Database = new PostgresDb($database_name, $host, $username, $password);
+$db = new PostgresDb($database_name, $host, $username, $password);
 ```
 
 For a more in-depth description see [USAGE.md](USAGE.md)
@@ -24,20 +24,20 @@ For a more in-depth description see [USAGE.md](USAGE.md)
     From 2.0 onwards the following syntax for the `where` method has been removed.
     
     ```php
-    $Database->where('id', ['>=' => 1]); // WHERE id >= 1
+    $db->where('id', ['>=' => 1]); // WHERE id >= 1
     ```
     
     The new behavior expects a 1-dimensional array of values to use with an `IN` clause. The keys are ignored.
     
     ```php
-    $Database->where('id', [1, 2, 3]); // WHERE id IN (1, 2, 3)
-	$Database->where('id', ['>=' => 1]); // WHERE id IN (1)
+    $db->where('id', [1, 2, 3]); // WHERE id IN (1, 2, 3)
+	$db->where('id', ['>=' => 1]); // WHERE id IN (1)
     ```
     
     This removes the ability to use an array to specify a comparison operator and a value at the same time. Instead, use the 3rd parameter to specify an operator other than `=`, like this:
 
     ```php
-    $Database->where('id', 1, '<=');
+    $db->where('id', 1, '<=');
     ```
  2. **`orderBy()` default direction**
  

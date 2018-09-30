@@ -15,31 +15,43 @@ To start using the class you need to create an instance with the following param
 
 ```php
 require "PostgresDb.php";
-$Database = new PostgresDb($database_name, $host, $username, $password);
+$db = new PostgresDb($database_name, $host, $username, $password);
 ```
 
-The class works with Composer's autoloading, so if you install through it you just need to require the `vendor/autoload.php` file. It's defined in the global namespace, so if you're using it from within a namespace, refer to it as `\PostgresDb` or use `use \PostgresDb;` at the top of the file so you can drop the backslash afterwards.
+Due to the way these parameters are mapped to the internal connection call within PHP these values must not contain spaces.
 
-By default, initializing the class does not immediately create a connection. To force a connection attempt, call:
+The class works with Composer's autoloading, so if you install through it you just need to require the `vendor/autoload.php` file somewhere in your project. It's defined in the global namespace, so if you're using it from within a namespace, refer to it as `\PostgresDb` or use `use \PostgresDb;` at the top of the file so you can drop the backslash afterwards.
+
+Initializing the class does not immediately create a connection. To force a connection attempt, call:
 
 ```php
-$Database->pdo();
+$db->getConnection();
 ```
 
-This will create (and return) the internal PDO object used by the class and simultaneously attempts to connect to the database. Initial connection errors can be caught by using `try…catch` but by default the script uses `PDO::ERRMODE_WARNING` for further errors.
+This will return the internal PDO object (and create it if it doesn't exist yet) used by the class and simultaneously attempts to connect to the database. Initial connection errors can be caught by using `try…catch` but by default the script uses `PDO::ERRMODE_WARNING` for further errors.
 
 If you'd prefer exceptions to be thrown instead, or if you like to live dangerously and want to silence all errors, you can use the chainable `setPDOErrmode()` method by passing any of the `PDO::ERRMODE_*` constants both before and after the connection has been made.
 
 ```php
 // Before connection
-$Database->setPDOErrmode(PDO::ERRMODE_EXCEPTION)->pdo();
+$db->setPDOErrmode(PDO::ERRMODE_EXCEPTION)->getConnection();
 
 // After connection
-$Database->pdo();
-$Database->setPDOErrmode(PDO::ERRMODE_SILENT)->get(…)->setPDOErrmode(PDO::ERRMODE_WARNING);
+$db->getConnection();
+$db->setPDOErrmode(PDO::ERRMODE_SILENT)->get(…)->setPDOErrmode(PDO::ERRMODE_WARNING);
 ```
 
 If you need the value later for whatever reason you can read it out using `getPDOErrmode()`.
+
+If you happen to have an existing PDO connection lying around you can also use it with this class, like so:
+
+```php
+require "PostgresDb.php";
+$db = new PostgresDb();
+$db->setConnection($existing_connection);
+```
+
+Any future method calls on the `$db` object will act on the existing connection instead of creating a new instance. Only use a different connection with this class if you know what you're doing. Manipulating the same PDO object with different libraries can result in strange behavior, so be careful.
 
 ### Selecting [`get()`, `getOne()`]
 
@@ -47,16 +59,16 @@ Returns an array containing each result as an array of its own. Returns `false` 
 
 ```php
 // SELECT * FROM users
-$Database->get('users');
+$db->get('users');
 
 // SELECT * FROM users LIMIT 1
-$Database->get('users', 1);
+$db->get('users', 1);
 
 // SELECT id, name FROM users LIMIT 1
-$Database->get('users', 1, 'id, name');
+$db->get('users', 1, 'id, name');
 
 // SELECT id, name FROM users LIMIT 2 OFFSET 1
-$Database->get('users', [1,2], 'id, name');
+$db->get('users', [1,2], 'id, name');
 ```
 
 Return format:
@@ -78,10 +90,10 @@ Alternatively, you can use `getOne` to only select a single row. Returns `false`
 
 ```php
 // SELECT * FROM users LIMIT 1
-$Database->getOne('users');
+$db->getOne('users');
 
 // SELECT id, name FROM users LIMIT 1
-$Database->getOne('users', 'id, name');
+$db->getOne('users', 'id, name');
 ```
 
 Return format:
@@ -97,29 +109,29 @@ Return format:
 
 ```php
 // SELECT * FROM users WHERE "id" = 1 LIMIT 1
-$Database->where('id', 1)->get('users');
+$db->where('id', 1)->get('users');
 
 // SELECT * FROM users LIMIT 1 WHERE "id" != 1
-$Database->where('"id" != 1')->getOne('users');
+$db->where('"id" != 1')->getOne('users');
 
 // SELECT * FROM users LIMIT 1 WHERE "id" != 1
-$Database->where('id', 1, '!=')->getOne('users');
+$db->where('id', 1, '!=')->getOne('users');
 
 // SELECT * FROM users LIMIT 1 WHERE "id" IN (1, 3)
-$Database->where('id', [1, 3])->getOne('users');
+$db->where('id', [1, 3])->getOne('users');
 
 // SELECT * FROM users LIMIT 1 WHERE "id" NOT IN (1, 3)
-$Database->where('id', [1, 3], '!=')->getOne('users');
+$db->where('id', [1, 3], '!=')->getOne('users');
 ```
 
 ### Join [`join()`]
 
 ```php
 // SELECT * FROM users u LEFT JOIN "messages" m ON m.user = u.id
-$Database->join('messages m', 'm.user = u.id', 'LEFT')->get('users u');
+$db->join('messages m', 'm.user = u.id', 'LEFT')->get('users u');
 
 // SELECT * FROM users u INNER JOIN "messages" m ON u.id = m.user
-$Database->join('messages m', 'u.id = m.user', 'INNER')->get('users u');
+$db->join('messages m', 'u.id = m.user', 'INNER')->get('users u');
 ```
 
 ### Ordering [`orderBy()`, `orderByLiteral()`]
@@ -128,16 +140,16 @@ Complex `ORDER BY` statements can be passed to `orderByLiteral` which will just 
 
 ```php
 // SELECT * FROM users ORDER BY "name" DESC
-$Database->orderBy('name')->get('users');
+$db->orderBy('name')->get('users');
 
 // SELECT * FROM users ORDER BY "name" ASC
-$Database->orderBy('name','ASC')->get('users');
+$db->orderBy('name','ASC')->get('users');
 
 // SELECT * FROM users ORDER BY rand()
-$Database->orderBy(PostgresDb::ORDERBY_RAND)->get('users');
+$db->orderBy(PostgresDb::ORDERBY_RAND)->get('users');
 
 // SELECT * FROM users ORDER BY CASE WHEN "name" IS NULL THEN 1 ELSE 0 END DESC, "name" ASC
-$Database
+$db
     ->orderByLiteral('CASE WHEN "name" IS NULL THEN 1 ELSE 0 END')
     ->orderBy('name','ASC')
     ->get('users');
@@ -147,9 +159,9 @@ $Database
 
 ```php
 // SELECT * FROM "users" GROUP BY "gender"
-$Database->groupBy('gender')->get('users');
+$db->groupBy('gender')->get('users');
 // SELECT * FROM "users" GROUP BY "gender", "othercol"
-$Database->groupBy('gender')->groupBy('othercol')->get('users');
+$db->groupBy('gender')->groupBy('othercol')->get('users');
 ```
 
 ### Inserting [`insert()`]
@@ -158,7 +170,7 @@ Returns `false` on failure and `true` if successful.
 
 ```php
 // INSERT INTO users ("name", gender) VALUES ('Joe', 'm')
-$Database->insert('users', ['name' => 'Joe', 'gender' => 'm']);
+$db->insert('users', ['name' => 'Joe', 'gender' => 'm']);
 ```
 
 |  id   |  name   | gender |
@@ -170,16 +182,18 @@ $Database->insert('users', ['name' => 'Joe', 'gender' => 'm']);
 
 You can also ask for the values of inserted columns, in which case it'll return those instead of `true` if the insert is successful. This is especially useful when you need the value of an index that's generated on the fly by Postgres.
 
+When returning a single column its value is returned by the method, and when multiple columns are specified the return value is an associative array with the keys being the columns and the values being, well, the values. 
+
 ```php
 // INSERT INTO users ("name") VALUES ('Joe') RETURNING id
-$id = $Database->insert('users', ['name' => 'Joe'], 'id');
+$id = $db->insert('users', ['name' => 'Joe'], 'id');
 // $id === 4
 ```
 
 ```php
 // INSERT INTO users ("name") VALUES ('Joe') RETURNING id, "name"
-$return = $Database->insert('users', ['name' => 'Joe'], ['id', 'name']);
-//     or $Database->insert('users', ['name' => 'Joe'], 'id, name');
+$return = $db->insert('users', ['name' => 'Joe'], ['id', 'name']);
+//     or $db->insert('users', ['name' => 'Joe'], 'id, name');
 // $return === ['id' => 4, 'name' => 'Joe']
 ```
 
@@ -189,7 +203,7 @@ Returns `false` on failure and `true` if successful.
 
 ```php
 // UPDATE users SET "name" = 'Dave' WHERE "id" = 1
-$Database->where('id', 1)->update('users', ['name' => 'Dave']);
+$db->where('id', 1)->update('users', ['name' => 'Dave']);
 ```
 
 | id |   name   | gender |
@@ -201,18 +215,26 @@ $Database->where('id', 1)->update('users', ['name' => 'Dave']);
 
 ### Delete [`delete()`]
 
-Returns `false` on failure and `true` if successful. Cannot be used with `groupBy()`, `join()` and `orderBy()`. An optional second argument can be passed to return columns from the deleted row, similar to `insert()`.
+Returns `false` on failure and `true` if successful. Cannot be used with `groupBy()`, `join()` and `orderBy()`.
 
 ```php
 // DELETE FROM users WHERE "id" = 3
-$success = $Database->where('id', 3)->delete('users');
+$success = $db->where('id', 3)->delete('users');
 // $success === true
+```
+
+A second argument can optionally be passed to return columns from the deleted row, similar to `insert()`.
+
+```php
+// DELETE FROM users WHERE "id" = 3 RETURNING gender
+$return = $db->where('id', 3)->delete('users', 'gender');
+// $return === 'm'
 ```
 
 ```php
 // DELETE FROM users WHERE "id" = 3 RETURNING "name", gender
-$return = $Database->where('id', 3)->delete('users', ['name', 'gender']);
-//     or $Database->where('id', 3)->delete('users', 'name, gender');
+$return = $db->where('id', 3)->delete('users', ['name', 'gender']);
+//     or $db->where('id', 3)->delete('users', 'name, gender');
 // $return === ['name' => 'Daniel', 'gender' => 'm']
 ```
 
@@ -228,12 +250,12 @@ Executes the query exactly* as passed, for when it is far too complex to use the
 
 ```php
 // Query string only
-$Database->rawQuery('SELECT * FROM users WHERE id = 4');
+$db->query('SELECT * FROM users WHERE id = 4');
 
 // Using prepared statement parameters
 $id = 4;
-$Database->rawQuery('SELECT * FROM users WHERE id = ? AND name = ?', [4, 'Joe']);
-$Database->rawQuery('SELECT * FROM users WHERE id = :id AND name = :who', [':id' => $id, ':who' => 'Joe']);
+$db->query('SELECT * FROM users WHERE id = ? && name = ?', [4, 'Joe']);
+$db->query('SELECT * FROM users WHERE id = :id && name = :who', [':id' => $id, ':who' => 'Joe']);
 ```
 
 Return format:
@@ -247,20 +269,15 @@ Return format:
 ]
 ```
 
-If you want the power of a custom query, but also the convenience of getting the result as a single array instead of having to use `$result[0]` all the time (which may even trigger an error if no results are found and the value becomes `null`) you can use `querySingle` which only returns the first result, similar to how `getOne` works.
+<sup>* The class currently replaces `&&` with `AND` if it's surrounded by whitespace on both sides. PostgreSQL would report a syntax error when using the former instead of the latter without this pre-processing step. See the `_alterQuery()` method for the exact implementation.</sup>
+
+If you want the power of a custom query, but also the convenience of getting the first result as a single array you can use `querySingle()` which wortks similarly to `getOne()`.
 
 ```php
-[
-    'id' => 4,
-    'name' => 'Joe'
-]
-```
-
-```php
-$Database->rawQuerySingle("SELECT * FROM 'users' WHERE id = 4");
+$db->querySingle("SELECT * FROM 'users' WHERE id = 4");
 // Works the same way for bound parameters
 $id = 4;
-$Database->rawQuerySingle("SELECT * FROM 'users' WHERE id = ?", [$id]);
+$db->querySingle("SELECT * FROM 'users' WHERE id = ?", [$id]);
 ```
 
 Return format:
@@ -277,32 +294,35 @@ Return format:
 **Note:** These will reset the object, so the following will **NOT** work as expected:
 
 ```php
-$withWhere = $Database->where('"id" = 2');
+$withWhere = $db->where('"id" = 2');
 if ($withWhere->has('users')) {
-    $Database->getOne('users');
+    $db->getOne('users');
 }
 ```
 
-Instead of returning the user with the `id` equal to `2`, it'll return whatever row it finds first since the `where` call is no longer in effect.
+Instead of returning the user with the `id` equal to `2`, it'll return whatever row it finds first since the `where()` call is no longer in effect.
 
 #### Check if a table exists [`tableExists():boolean`]
 
 ```php
-$Database->tableExists('users'); // true
+$db->tableExists('users'); // true
 ```
 
 #### Get number of matching rows [`count():int`]
 
 ```php
-$Database->count('users'); // 3
-$Database->where('"id" = 2')->count('users'); // 1
+$db->count('users'); // 3
+$db->where('"id" = 2')->count('users'); // 1
 ```
 
 #### Check if the query returns any rows [`has():boolean`]
 
+Basically `count() >= 1`, but reads nicer.
+
 ```php
-$Database->has('users'); // true
-$Database->where('"id" = 2')->has('users'); // true
+$db->has('users'); // true
+$db->where('id', 2)->has('users'); // true
+$db->where('id', 0)->has('users'); // false
 ```
 
 ### Debugging
@@ -312,18 +332,18 @@ $Database->where('"id" = 2')->has('users'); // true
 This will return the last query executed through the class where the placeholders have been replaced with actual values. While the class does its best to keep the SQL valid you should not rely on the returned value being a valid query. 
 
 ```php
-$Database->insert('users', ['name' => 'Sarah'])
-echo $Database->getLastQuery(); // INSERT INTO "users" ("name") VALUES ('Sarah')
+$db->insert('users', ['name' => 'Sarah'])
+echo $db->getLastQuery(); // INSERT INTO "users" ("name") VALUES ('Sarah')
 ```
 
 #### Get last error message [`getLastError():string`]
 
-This can be useful after a failed `insert`/`update` call, for example.
+This can be useful after a failed `insert()`/`update()` call, for example.
 
 ```php
 // Duplicated ID
-$Database->insert('users', ['id' => '1', 'name' => 'Fred'])
-echo $Database->getLastError(); // #1062 - Duplicate entry '1' for key 'PRIMARY'
+$db->insert('users', ['id' => '1', 'name' => 'Fred'])
+echo $db->getLastError(); // #1062 - Duplicate entry '1' for key 'PRIMARY'
 ```
 
 #### Number of rows affected [`count:int`]
@@ -331,8 +351,8 @@ echo $Database->getLastError(); // #1062 - Duplicate entry '1' for key 'PRIMARY'
 Returns the number of rows affected by the last SQL statement
 
 ```php
-$Database->get('users');
-echo $Database->count; // 3
+$db->get('users');
+echo $db->count; // 3
 ```
 
 ### Extending functionality
