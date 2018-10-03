@@ -11,16 +11,19 @@ For the examples below, the following `users` table structure is used:
 
 ### Connecting to a database
 
+The class works with Composer's autoloading, so if you install through it you just need to require the `vendor/autoload.php` file somewhere in your project. It's defined in the `SesinopSys` namespace, so if you're using it from within a namespace, refer to it as `\SeinopSys\PostgresDb` or add `use \SeinopSys\PostgresDb;` at the top of the file so you can drop the namespace afterwards.
+
+If you decided to go the simple include route then you can include the `src/PostgresDb.php` file and use it pretty much the same way.
+
 To start using the class you need to create an instance with the following parameters.
 
 ```php
-require "PostgresDb.php";
+use \SeinopSys\PostgresDb;
+
 $db = new PostgresDb($database_name, $host, $username, $password);
 ```
 
 Due to the way these parameters are mapped to the internal connection call within PHP these values must not contain spaces.
-
-The class works with Composer's autoloading, so if you install through it you just need to require the `vendor/autoload.php` file somewhere in your project. It's defined in the global namespace, so if you're using it from within a namespace, refer to it as `\PostgresDb` or use `use \PostgresDb;` at the top of the file so you can drop the backslash afterwards.
 
 Initializing the class does not immediately create a connection. To force a connection attempt, call:
 

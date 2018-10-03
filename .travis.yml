@@ -13,4 +13,4 @@ addons:
 before_script:
   - psql -c 'CREATE DATABASE test;' -U postgres
   - composer install
-script: php -f test.php
+script: composer test && composer lint

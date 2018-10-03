@@ -95,7 +95,9 @@ function expect($generated, $expect, $exit_key = 'STRING_MISMATCH')
     }
 }
 
-require __DIR__ . '/PostgresDb.php';
+require __DIR__ . '/src/PostgresDb.php';
+
+use \SeinopSys\PostgresDb;
 
 # replacePlaceHolders() checks
 expect(

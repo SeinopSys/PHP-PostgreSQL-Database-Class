@@ -15,7 +15,20 @@
 		"ext-pdo": "*",
 		"ext-pdo_pgsql": "*"
 	},
+	"require-dev": {
+		"squizlabs/php_codesniffer": "3.*"
+	},
 	"autoload": {
-		"files": ["PostgresDb.php"]
+		"psr-4": {
+			"SeinopSys\\": "src/"
+		}
+	},
+	"scripts": {
+		"test": "@php test.php",
+		"lint": "vendor/bin/phpcs . --standard=ruleset.xml"
+	},
+    "scripts-descriptions": {
+    	"test": "Run tests - likely going to fail unless running on Travis CI",
+    	"lint": "Run PHP_CodeSniffer with the project's ruleset"
 	}
 }

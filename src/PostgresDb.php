@@ -1,5 +1,7 @@
 <?php
 
+namespace SeinopSys;
+
 /**
  * PostgresDb Class
  * by @SeinopSys | https://github.com/SeinopSys/PHP-PostgreSQL-Database-Class
@@ -13,116 +15,115 @@
  **/
 class PostgresDb
 {
-    protected
-        /**
-         * PDO connection
-         *
-         * @var PDO
-         */
-        $_connection,
-        /**
-         * The SQL query to be prepared and executed
-         *
-         * @var string
-         */
-        $_query,
-        /**
-         * The previously executed SQL query
-         *
-         * @var string
-         */
-        $_lastQuery,
-        /**
-         * An array that holds where joins
-         *
-         * @var array
-         */
-        $_join = [],
-        /**
-         * An array that holds where conditions 'fieldName' => 'value'
-         *
-         * @var array
-         */
-        $_where = [],
-        /**
-         * Dynamic type list for order by condition value
-         */
-        $_orderBy = [],
-        /**
-         * Dynamic type list for group by condition value
-         */
-        $_groupBy = [],
-        /**
-         * Dynamic array that holds a combination of where condition/table data value types and parameter references
-         *
-         * @var array|null
-         */
-        $_bindParams,
-        /**
-         * Variable which holds last statement error
-         *
-         * @var string
-         */
-        $_stmtError,
-        /**
-         * Allows the use of the tableNameToClassName method
-         *
-         * @var string
-         */
-        $_autoClassEnabled = true,
-        /**
-         * Name of table we're performing the action on
-         *
-         * @var string
-         */
-        $_tableName,
-        /**
-         * Type of fetch to perform
-         *
-         * @var string
-         */
-        $_fetchType = PDO::FETCH_ASSOC,
-        /**
-         * Fetch argument
-         *
-         * @var string
-         */
-        $_fetchArg,
-        /**
-         * Error mode for the connection
-         * Defaults to
-         *
-         * @var int
-         */
-        $_errorMode = PDO::ERRMODE_WARNING,
-        /**
-         * List of keywords used for escaping column names, automatically populated on connection
-         *
-         * @var string[]
-         */
-        $_sqlKeywords = [],
-        /**
-         * List of columns to be returned after insert/delete
-         *
-         * @var string[]|null
-         */
-        $_returning;
+    /**
+     * PDO connection
+     *
+     * @var \PDO
+     */
+    protected $connection;
+    /**
+     * The SQL query to be prepared and executed
+     *
+     * @var string
+     */
+    protected $query;
+    /**
+     * The previously executed SQL query
+     *
+     * @var string
+     */
+    protected $lastQuery;
+    /**
+     * An array that holds where joins
+     *
+     * @var array
+     */
+    protected $join = [];
+    /**
+     * An array that holds where conditions 'fieldName' => 'value'
+     *
+     * @var array
+     */
+    protected $where = [];
+    /**
+     * Dynamic type list for order by condition value
+     */
+    protected $orderBy = [];
+    /**
+     * Dynamic type list for group by condition value
+     */
+    protected $groupBy = [];
+    /**
+     * Dynamic array that holds a combination of where condition/table data value types and parameter references
+     *
+     * @var array|null
+     */
+    protected $bindParams;
+    /**
+     * Variable which holds last statement error
+     *
+     * @var string
+     */
+    protected $stmtError;
+    /**
+     * Allows the use of the tableNameToClassName method
+     *
+     * @var bool
+     */
+    protected $autoClassEnabled = true;
+    /**
+     * Name of table we're performing the action on
+     *
+     * @var string|null
+     */
+    protected $tableName;
+    /**
+     * Type of fetch to perform
+     *
+     * @var int
+     */
+    protected $fetchType = \PDO::FETCH_ASSOC;
+    /**
+     * Fetch argument
+     *
+     * @var string
+     */
+    protected $fetchArg;
+    /**
+     * Error mode for the connection
+     * Defaults to
+     *
+     * @var int
+     */
+    protected $errorMode = \PDO::ERRMODE_WARNING;
+    /**
+     * List of keywords used for escaping column names, automatically populated on connection
+     *
+     * @var string[]
+     */
+    protected $sqlKeywords = [];
+    /**
+     * List of columns to be returned after insert/delete
+     *
+     * @var string[]|null
+     */
+    protected $returning;
 
-    public
-        /**
-         * Variable which holds an amount of returned rows during queries
-         *
-         * @var int
-         */
-        $count = 0;
 
-    private
-        /**
-         * Used for connecting to the database
-         *
-         * @var string
-         */
-        $_connectionString;
+    /**
+     * Variable which holds an amount of returned rows during queries
+     *
+     * @var int
+     */
+    public $count = 0;
+
+
+    /**
+     * Used for connecting to the database
+     *
+     * @var string
+     */
+    private $connectionString;
 
     const ORDERBY_RAND = 'rand()';
 
@@ -136,63 +137,52 @@ class PostgresDb
      */
     public function __construct($db = '', $host = '', $user = '', $pass = '')
     {
-        $this->_connectionString = "pgsql:host=$host user=$user password=$pass dbname=$db options='--client_encoding=UTF8'";
+        $this->connectionString = <<<CONNSTR
+pgsql:host=$host user=$user password=$pass dbname=$db options='--client_encoding=UTF8'
+CONNSTR;
     }
 
     /**
      * Initiate a database connection using the data passed in the constructor
      *
-     * @throws PDOException
-     * @throws RuntimeException
+     * @throws \PDOException
+     * @throws \RuntimeException
      */
-    protected function _connect()
+    protected function connect()
     {
-        $this->setConnection(new PDO($this->_connectionString));
-        $this->_connection->setAttribute(PDO::ATTR_ERRMODE, $this->_errorMode);
+        $this->setConnection(new \PDO($this->connectionString));
+        $this->connection->setAttribute(\PDO::ATTR_ERRMODE, $this->errorMode);
     }
 
     /**
-     * @return PDO
-     * @throws RuntimeException
-     * @throws PDOException
+     * @return \PDO
+     * @throws \RuntimeException
+     * @throws \PDOException
      */
     public function getConnection()
     {
-        if (!$this->_connection) {
-            $this->_connect();
+        if (!$this->connection) {
+            $this->connect();
         }
 
-        return $this->_connection;
+        return $this->connection;
     }
 
     /**
      * Allows passing any PDO object to the class, e.g. one initiated by a different library
      *
-     * @param PDO $PDO
+     * @param \PDO $PDO
      *
-     * @throws PDOException
-     * @throws RuntimeException
+     * @throws \PDOException
+     * @throws \RuntimeException
      */
-    public function setConnection(PDO $PDO)
+    public function setConnection(\PDO $PDO)
     {
-        $this->_connection = $PDO;
+        $this->connection = $PDO;
         $keywords = $this->query('SELECT word FROM pg_get_keywords()');
         foreach ($keywords as $key) {
-            $this->_sqlKeywords[strtolower($key['word'])] = true;
+            $this->sqlKeywords[strtolower($key['word'])] = true;
         }
-    }
-
-    /**
-     * @deprecated Use getConnection instead
-     *
-     * @return PDO
-     * @throws PDOException
-     * @throws RuntimeException
-     */
-    public function pdo()
-    {
-        trigger_error('The pdo() method has been deprecated, please use getConnection() instead', E_USER_DEPRECATED);
-        return $this->getConnection();
     }
 
     /**
@@ -205,9 +195,9 @@ class PostgresDb
      */
     public function setPDOErrmode($errmode)
     {
-        $this->_errorMode = $errmode;
-        if ($this->_connection) {
-            $this->_connection->setAttribute(PDO::ATTR_ERRMODE, $this->_errorMode);
+        $this->errorMode = $errmode;
+        if ($this->connection) {
+            $this->connection->setAttribute(\PDO::ATTR_ERRMODE, $this->errorMode);
         }
 
         return $this;
@@ -220,22 +210,30 @@ class PostgresDb
      */
     public function getPDOErrmode()
     {
-        return $this->_errorMode;
+        return $this->errorMode;
     }
 
     /**
      * Method attempts to prepare the SQL query
      * and throws an error if there was a problem.
      *
-     * @return PDOStatement
-     * @throws RuntimeException
+     * @return \PDOStatement
+     * @throws \RuntimeException
      */
-    protected function _prepareQuery()
+    protected function prepareQuery()
     {
         try {
-            $stmt = $this->getConnection()->prepare($this->_query);
-        } catch (PDOException $e) {
-            throw new RuntimeException("Problem preparing query ($this->_query): " . $e->getMessage(), $e->getCode(), $e);
+            $stmt = $this->getConnection()->prepare($this->query);
+        } catch (\PDOException $e) {
+            throw new \RuntimeException(
+                "Problem preparing query ($this->query): " . $e->getMessage(),
+                $e->getCode(),
+                $e
+            );
+        }
+
+        if (is_bool($stmt)) {
+            throw new \RuntimeException("Problem preparing query ($this->query). Check logs/stderr for any warnings.");
         }
 
         return $stmt;
@@ -245,7 +243,7 @@ class PostgresDb
      * Function to replace query placeholders with bound variables
      *
      * @param string $query
-     * @param array $bindParams
+     * @param array  $bindParams
      *
      * @return string
      */
@@ -262,14 +260,20 @@ class PostgresDb
         ksort($bindParams);
 
         /** @noinspection CallableParameterUseCaseInTypeContextInspection */
-        $query = preg_replace_callback('/:([a-z]+)/', function ($matches) use ($namedParams) {
-            return array_key_exists($matches[1],
-                $namedParams) ? self::_bindValue($namedParams[$matches[1]]) : $matches[1];
-        }, $query);
+        $query = preg_replace_callback(
+            '/:([a-z]+)/',
+            function ($matches) use ($namedParams) {
+                return array_key_exists(
+                    $matches[1],
+                    $namedParams
+                ) ? self::bindValue($namedParams[$matches[1]]) : $matches[1];
+            },
+            $query
+        );
 
         foreach ($bindParams as $param) {
             /** @noinspection CallableParameterUseCaseInTypeContextInspection */
-            $query = preg_replace('/\?/', self::_bindValue($param), $query, 1);
+            $query = preg_replace('/\?/', self::bindValue($param), $query, 1);
         }
 
         return $query;
@@ -282,7 +286,7 @@ class PostgresDb
      *
      * @return string
      */
-    private static function _bindValue($val)
+    private static function bindValue($val)
     {
         switch (gettype($val)) {
             case 'NULL':
@@ -290,6 +294,9 @@ class PostgresDb
                 break;
             case 'string':
                 $val = "'" . preg_replace('/(^|[^\'])\'/', "''", $val) . "'";
+                break;
+            case 'boolean':
+                $val = $val ? 'true' : 'false';
                 break;
             default:
                 $val = (string)$val;
@@ -304,15 +311,15 @@ class PostgresDb
      * @param mixed $value Variable value
      * @param string|null $key Variable key
      */
-    protected function _bindParam($value, $key = null)
+    protected function bindParam($value, $key = null)
     {
         if (is_bool($value)) {
             $value = $value ? 'true' : 'false';
         }
         if ($key === null || is_numeric($key)) {
-            $this->_bindParams[] = $value;
+            $this->bindParams[] = $value;
         } else {
-            $this->_bindParams[$key] = $value;
+            $this->bindParams[$key] = $value;
         }
     }
 
@@ -322,10 +329,10 @@ class PostgresDb
      * @param array $values Variable with values
      * @param bool $ignoreKey Whether array keys should be ignored when binding
      */
-    protected function _bindParams($values, $ignoreKey = false)
+    protected function bindParams($values, $ignoreKey = false)
     {
         foreach ($values as $key => $value) {
-            $this->_bindParam($value, $ignoreKey ? null : $key);
+            $this->bindParam($value, $ignoreKey ? null : $key);
         }
     }
 
@@ -338,9 +345,9 @@ class PostgresDb
      *
      * @return string
      */
-    protected function _buildPair($operator, $value)
+    protected function buildPair($operator, $value)
     {
-        $this->_bindParam($value);
+        $this->bindParam($value);
 
         return " $operator ? ";
     }
@@ -348,19 +355,20 @@ class PostgresDb
     /**
      * Abstraction method that will build an JOIN part of the query
      */
-    protected function _buildJoin()
+    protected function buildJoin()
     {
-        if (empty ($this->_join)) {
+        if (empty($this->join)) {
             return;
         }
 
-        foreach ($this->_join as $join) {
+        foreach ($this->join as $join) {
             list($joinType, $joinTable, $joinCondition) = $join;
-            $this->_query = rtrim($this->_query) . " $joinType JOIN " . $this->_quoteTableName($joinTable) . " ON $joinCondition";
+            $quotedTableName = $this->quoteTableName($joinTable);
+            $this->query = rtrim($this->query) . " $joinType JOIN $quotedTableName ON $joinCondition";
         }
     }
 
-    protected static function _escapeApostrophe($str)
+    protected static function escapeApostrophe($str)
     {
         return preg_replace('~(^|[^\'])\'~', '$1\'\'', $str);
     }
@@ -368,26 +376,26 @@ class PostgresDb
     /**
      * Abstraction method that will build the part of the WHERE conditions
      *
-     * @throws InvalidArgumentException
-     * @throws RuntimeException
+     * @throws \InvalidArgumentException
+     * @throws \RuntimeException
      */
-    protected function _buildWhere()
+    protected function buildWhere()
     {
-        if (empty ($this->_where)) {
+        if (empty($this->where)) {
             return;
         }
 
         //Prepare the where portion of the query
-        $this->_query .= ' WHERE';
+        $this->query .= ' WHERE';
 
         // $cond, $whereProp, $operator, $whereValue
-        foreach ($this->_where as $where) {
+        foreach ($this->where as $where) {
             list($cond, $whereProp, $operator, $whereValue) = $where;
             if ($whereValue !== self::DBNULL) {
-                $whereProp = $this->_quoteColumnName($whereProp);
+                $whereProp = $this->quoteColumnName($whereProp);
             }
 
-            $this->_query = rtrim($this->_query) . ' ' . trim("$cond $whereProp");
+            $this->query = rtrim($this->query) . ' ' . trim("$cond $whereProp");
 
             if ($whereValue === self::DBNULL) {
                 continue;
@@ -408,27 +416,29 @@ class PostgresDb
                 case 'NOT IN':
                 case 'IN':
                     if (!is_array($whereValue)) {
-                        throw new \InvalidArgumentException(__METHOD__ . ' expects $whereValue to be an array when using IN/NOT IN');
+                        throw new \InvalidArgumentException(
+                            __METHOD__ . ' expects $whereValue to be an array when using IN/NOT IN'
+                        );
                     }
 
                     /** @var $whereValue array */
                     foreach ($whereValue as $v) {
-                        $this->_bindParam($v);
+                        $this->bindParam($v);
                     }
-                    $this->_query .= " $operator (" . implode(', ', array_fill(0, count($whereValue), '?')) . ') ';
+                    $this->query .= " $operator (" . implode(', ', array_fill(0, count($whereValue), '?')) . ') ';
                     break;
                 case 'NOT BETWEEN':
                 case 'BETWEEN':
-                    $this->_query .= " $operator ? AND ? ";
-                    $this->_bindParams($whereValue, true);
+                    $this->query .= " $operator ? AND ? ";
+                    $this->bindParams($whereValue, true);
                     break;
                 case 'NOT EXISTS':
                 case 'EXISTS':
-                    $this->_query .= $operator . $this->_buildPair('', $whereValue);
+                    $this->query .= $operator . $this->buildPair('', $whereValue);
                     break;
                 default:
                     if (is_array($whereValue)) {
-                        $this->_bindParams($whereValue);
+                        $this->bindParams($whereValue);
                     } elseif ($whereValue === null) {
                         switch ($operator) {
                             case '!=':
@@ -438,13 +448,13 @@ class PostgresDb
                                 $operator = 'IS';
                                 break;
                         }
-                        $this->_query .= " $operator NULL ";
+                        $this->query .= " $operator NULL ";
                     } elseif ($whereValue !== self::DBNULL || $whereValue === 0 || $whereValue === '0') {
-                        $this->_query .= $this->_buildPair($operator, $whereValue);
+                        $this->query .= $this->buildPair($operator, $whereValue);
                     }
             }
         }
-        $this->_query = rtrim($this->_query);
+        $this->query = rtrim($this->query);
     }
 
     /**
@@ -452,10 +462,10 @@ class PostgresDb
      *
      * @param string|string[]|null $returning What column(s) to return
      *
-     * @throws InvalidArgumentException
-     * @throws RuntimeException
+     * @throws \InvalidArgumentException
+     * @throws \RuntimeException
      */
-    protected function _buildReturning($returning)
+    protected function buildReturning($returning)
     {
         if ($returning === null) {
             return;
@@ -464,12 +474,12 @@ class PostgresDb
         if (!is_array($returning)) {
             $returning = array_map('trim', explode(',', $returning));
         }
-        $this->_returning = $returning;
+        $this->returning = $returning;
         $columns = [];
         foreach ($returning as $column) {
-            $columns[] = $this->_quoteColumnName($column, true);
+            $columns[] = $this->quoteColumnName($column, true);
         }
-        $this->_query .= ' RETURNING ' . implode(', ', $columns);
+        $this->query .= ' RETURNING ' . implode(', ', $columns);
     }
 
     /**
@@ -477,41 +487,41 @@ class PostgresDb
      * @param string[] $tableColumns
      * @param bool $isInsert
      *
-     * @throws RuntimeException
+     * @throws \RuntimeException
      */
-    public function _buildDataPairs($tableData, $tableColumns, $isInsert)
+    public function buildDataPairs($tableData, $tableColumns, $isInsert)
     {
         foreach ($tableColumns as $column) {
             $value = $tableData[$column];
             if (!$isInsert) {
-                $this->_query .= "\"$column\" = ";
+                $this->query .= "\"$column\" = ";
             }
 
             // Simple value
             if (!is_array($value)) {
-                $this->_bindParam($value);
-                $this->_query .= '?, ';
+                $this->bindParam($value);
+                $this->query .= '?, ';
                 continue;
             }
 
             if ($isInsert) {
-                throw new RuntimeException("Array passed as insert value for column $column");
+                throw new \RuntimeException("Array passed as insert value for column $column");
             }
 
-            $this->_query .= '';
+            $this->query .= '';
             $in = [];
             foreach ($value as $k => $v) {
                 if (is_int($k)) {
-                    $this->_bindParam($value);
+                    $this->bindParam($value);
                     $in[] = '?';
                 } else {
-                    $this->_bindParams[$k] = $value;
+                    $this->bindParams[$k] = $value;
                     $in[] = ":$k";
                 }
             }
-            $this->_query = 'IN (' . implode(', ', $in) . ')';
+            $this->query = 'IN (' . implode(', ', $in) . ')';
         }
-        $this->_query = rtrim($this->_query, ', ');
+        $this->query = rtrim($this->query, ', ');
     }
 
     /**
@@ -519,63 +529,63 @@ class PostgresDb
      *
      * @param array $tableData
      *
-     * @throws RuntimeException
-     * @throws InvalidArgumentException
+     * @throws \RuntimeException
+     * @throws \InvalidArgumentException
      */
-    protected function _buildInsertQuery($tableData)
+    protected function buildInsertQuery($tableData)
     {
         if (!is_array($tableData)) {
             return;
         }
 
-        $isInsert = stripos($this->_query, 'INSERT') === 0;
+        $isInsert = stripos($this->query, 'INSERT') === 0;
         $dataColumns = array_keys($tableData);
         if ($isInsert) {
-            $this->_query .= ' (' . implode(', ', $this->_quoteColumnNames($dataColumns)) . ') VALUES (';
+            $this->query .= ' (' . implode(', ', $this->quoteColumnNames($dataColumns)) . ') VALUES (';
         } else {
-            $this->_query .= ' SET ';
+            $this->query .= ' SET ';
         }
 
-        $this->_buildDataPairs($tableData, $dataColumns, $isInsert);
+        $this->buildDataPairs($tableData, $dataColumns, $isInsert);
 
         if ($isInsert) {
-            $this->_query .= ')';
+            $this->query .= ')';
         }
     }
 
     /**
      * Abstraction method that will build the GROUP BY part of the WHERE statement
      *
-     * @throws InvalidArgumentException
-     * @throws RuntimeException
+     * @throws \InvalidArgumentException
+     * @throws \RuntimeException
      */
-    protected function _buildGroupBy()
+    protected function buildGroupBy()
     {
-        if (empty ($this->_groupBy)) {
+        if (empty($this->groupBy)) {
             return;
         }
 
-        $this->_query .= ' GROUP BY ' . implode(', ', $this->_quoteColumnNames($this->_groupBy));
+        $this->query .= ' GROUP BY ' . implode(', ', $this->quoteColumnNames($this->groupBy));
     }
 
     /**
      * Abstraction method that will build the LIMIT part of the WHERE statement
      *
-     * @throws InvalidArgumentException
+     * @throws \InvalidArgumentException
      */
-    protected function _buildOrderBy()
+    protected function buildOrderBy()
     {
-        if (empty($this->_orderBy)) {
+        if (empty($this->orderBy)) {
             return;
         }
 
-        $this->_query .= ' ORDER BY ';
+        $this->query .= ' ORDER BY ';
         $order = [];
-        foreach ($this->_orderBy as $column => $dir) {
+        foreach ($this->orderBy as $column => $dir) {
             $order[] = "$column $dir";
         }
 
-        $this->_query .= implode(', ', $order);
+        $this->query .= implode(', ', $order);
     }
 
     /**
@@ -583,13 +593,13 @@ class PostgresDb
      *
      * @param int|int[] $numRows An array to define SQL limit in format [$limit,$offset] or just $limit
      */
-    protected function _buildLimit($numRows)
+    protected function buildLimit($numRows)
     {
         if ($numRows === null) {
             return;
         }
 
-        $this->_query .= ' LIMIT ' . (
+        $this->query .= ' LIMIT ' . (
             is_array($numRows)
                 ? (int)$numRows[1] . ' OFFSET ' . (int)$numRows[0]
                 : (int)$numRows
@@ -605,24 +615,24 @@ class PostgresDb
      * @param array $tableData Should contain an array of data for updating the database.
      * @param string|string[]|null $returning What column(s) to return after inserting
      *
-     * @return PDOStatement Returns the $stmt object.
-     * @throws InvalidArgumentException
-     * @throws RuntimeException
+     * @return \PDOStatement|bool Returns the $stmt object.
+     * @throws \InvalidArgumentException
+     * @throws \RuntimeException
      */
-    protected function _buildQuery($numRows = null, $tableData = null, $returning = null)
+    protected function buildQuery($numRows = null, $tableData = null, $returning = null)
     {
-        $this->_buildJoin();
-        $this->_buildInsertQuery($tableData);
-        $this->_buildWhere();
-        $this->_buildReturning($returning);
-        $this->_buildGroupBy();
-        $this->_buildOrderBy();
-        $this->_buildLimit($numRows);
-        $this->_alterQuery();
+        $this->buildJoin();
+        $this->buildInsertQuery($tableData);
+        $this->buildWhere();
+        $this->buildReturning($returning);
+        $this->buildGroupBy();
+        $this->buildOrderBy();
+        $this->buildLimit($numRows);
+        $this->alterQuery();
 
-        $this->_lastQuery = self::replacePlaceHolders($this->_query, $this->_bindParams);
+        $this->lastQuery = self::replacePlaceHolders($this->query, $this->bindParams);
 
-        return $this->_prepareQuery();
+        return $this->prepareQuery();
     }
 
     /**
@@ -631,25 +641,25 @@ class PostgresDb
      * @param string $query User-provided query to execute.
      * @param array $bindParams Variables array to bind to the SQL statement.
      *
-     * @return array Contains the returned rows from the query.
-     * @throws RuntimeException
-     * @throws PDOException
+     * @return array|false Array containing the returned rows from the query or false on failure
+     * @throws \RuntimeException
+     * @throws \PDOException
      */
     public function query($query, $bindParams = null)
     {
-        $this->_query = $query;
-        $this->_alterQuery();
+        $this->query = $query;
+        $this->alterQuery();
 
-        $stmt = $this->_prepareQuery();
+        $stmt = $this->prepareQuery();
         if (empty($bindParams)) {
-            $this->_bindParams = null;
+            $this->bindParams = null;
         } elseif (!is_array($bindParams)) {
-            throw new RuntimeException('$bindParams must be an array');
+            throw new \RuntimeException('$bindParams must be an array');
         } else {
-            $this->_bindParams($bindParams);
+            $this->bindParams($bindParams);
         }
 
-        return $this->_execStatement($stmt);
+        return $this->execStatement($stmt);
     }
 
     /**
@@ -659,12 +669,12 @@ class PostgresDb
      * @param array $bindParams Variables array to bind to the SQL statement.
      *
      * @return array
-     * @throws RuntimeException
-     * @throws PDOException
+     * @throws \RuntimeException
+     * @throws \PDOException
      */
     public function querySingle($query, $bindParams = null)
     {
-        return $this->_singleRow($this->query($query, $bindParams));
+        return $this->singleRow($this->query($query, $bindParams));
     }
 
     /**
@@ -673,9 +683,9 @@ class PostgresDb
      * @param string $table Name of table
      *
      * @return int
-     * @throws InvalidArgumentException
-     * @throws PDOException
-     * @throws RuntimeException
+     * @throws \InvalidArgumentException
+     * @throws \PDOException
+     * @throws \RuntimeException
      */
     public function count($table)
     {
@@ -698,10 +708,10 @@ class PostgresDb
      */
     public function where($whereProp, $whereValue = self::DBNULL, $operator = '=', $cond = 'AND')
     {
-        if (count($this->_where) === 0) {
+        if (count($this->where) === 0) {
             $cond = '';
         }
-        $this->_where[] = [$cond, $whereProp, strtoupper($operator), $whereValue];
+        $this->where[] = [$cond, $whereProp, strtoupper($operator), $whereValue];
 
         return $this;
     }
@@ -725,7 +735,7 @@ class PostgresDb
     public function groupBy($groupByField)
     {
         $groupByField = preg_replace('/[^-a-z0-9\.\(\),_"\*]+/i', '', $groupByField);
-        $this->_groupBy[] = $groupByField;
+        $this->groupBy[] = $groupByField;
 
         return $this;
     }
@@ -737,19 +747,19 @@ class PostgresDb
      * @param string $orderByDirection
      *
      * @return self
-     * @throws InvalidArgumentException
-     * @throws RuntimeException
+     * @throws \InvalidArgumentException
+     * @throws \RuntimeException
      */
     public function orderBy($orderByColumn, $orderByDirection = 'ASC')
     {
         $orderByDirection = strtoupper(trim($orderByDirection));
-        $orderByColumn = $this->_quoteColumnName($orderByColumn);
+        $orderByColumn = $this->quoteColumnName($orderByColumn);
 
         if (!is_string($orderByDirection) || !preg_match('~^(ASC|DESC)~', $orderByDirection)) {
-            throw new RuntimeException('Wrong order direction ' . $orderByDirection . ' on field ' . $orderByColumn);
+            throw new \RuntimeException('Wrong order direction ' . $orderByDirection . ' on field ' . $orderByColumn);
         }
 
-        $this->_orderBy[$orderByColumn] = $orderByDirection;
+        $this->orderBy[$orderByColumn] = $orderByDirection;
 
         return $this;
     }
@@ -764,7 +774,7 @@ class PostgresDb
      */
     public function orderByLiteral($order, $direction = 'ASC')
     {
-        $this->_orderBy[$order] = $direction;
+        $this->orderBy[$order] = $direction;
 
         return $this;
     }
@@ -776,10 +786,10 @@ class PostgresDb
      * @param int|int[] $numRows Array to define SQL limit in format [$limit,$offset] or just $limit
      * @param string|array $columns
      *
-     * @return array Contains the returned rows from the select query.
-     * @throws InvalidArgumentException
-     * @throws PDOException
-     * @throws RuntimeException
+     * @return array|false Contains the returned rows from the select query or false on failure
+     * @throws \InvalidArgumentException
+     * @throws \PDOException
+     * @throws \RuntimeException
      */
     public function get($tableName, $numRows = null, $columns = null)
     {
@@ -789,18 +799,18 @@ class PostgresDb
             if (!is_array($columns)) {
                 $columns = explode(',', $columns);
             }
-            $columns = implode(', ', $this->_quoteColumnNames($columns, true));
+            $columns = implode(', ', $this->quoteColumnNames($columns, true));
         }
 
-        $table = $this->_quoteTableName($tableName);
-        $this->_query = "SELECT $columns FROM $table";
-        $stmt = $this->_buildQuery($numRows);
+        $table = $this->quoteTableName($tableName);
+        $this->query = "SELECT $columns FROM $table";
+        $stmt = $this->buildQuery($numRows);
 
-        if ($this->_autoClassEnabled) {
-            $this->_tableName = $tableName;
+        if ($this->autoClassEnabled) {
+            $this->setTableName($tableName);
         }
 
-        return $this->_execStatement($stmt);
+        return $this->execStatement($stmt);
     }
 
     /**
@@ -810,9 +820,9 @@ class PostgresDb
      * @param string $columns
      *
      * @return mixed|null
-     * @throws InvalidArgumentException
-     * @throws PDOException
-     * @throws RuntimeException
+     * @throws \InvalidArgumentException
+     * @throws \PDOException
+     * @throws \RuntimeException
      */
     public function getOne($tableName, $columns = '*')
     {
@@ -821,6 +831,7 @@ class PostgresDb
         if (is_array($res) && isset($res[0])) {
             return $res[0];
         }
+
         if ($res) {
             return $res;
         }
@@ -835,9 +846,9 @@ class PostgresDb
      * @param string $tableName The name of the database table to work with.
      *
      * @return bool
-     * @throws InvalidArgumentException
-     * @throws PDOException
-     * @throws RuntimeException
+     * @throws \InvalidArgumentException
+     * @throws \PDOException
+     * @throws \RuntimeException
      */
     public function has($tableName)
     {
@@ -851,17 +862,17 @@ class PostgresDb
      * @param array $tableData Array of data to update the desired row.
      *
      * @return bool
-     * @throws InvalidArgumentException
-     * @throws PDOException
-     * @throws RuntimeException
+     * @throws \InvalidArgumentException
+     * @throws \PDOException
+     * @throws \RuntimeException
      */
     public function update($tableName, $tableData)
     {
-        $tableName = $this->_quoteTableName($tableName);
-        $this->_query = "UPDATE $tableName";
-        $stmt = $this->_buildQuery(null, $tableData);
+        $tableName = $this->quoteTableName($tableName);
+        $this->query = "UPDATE $tableName";
+        $stmt = $this->buildQuery(null, $tableData);
 
-        $res = $this->_execStatement($stmt);
+        $res = $this->execStatement($stmt);
 
         return (bool)$res;
     }
@@ -874,23 +885,23 @@ class PostgresDb
      * @param string|string[]|null $returnColumns Which columns to return
      *
      * @return mixed Boolean if $returnColumns is not specified, the returned columns' values otherwise
-     * @throws InvalidArgumentException
-     * @throws PDOException
-     * @throws RuntimeException
+     * @throws \InvalidArgumentException
+     * @throws \PDOException
+     * @throws \RuntimeException
      */
     public function insert($tableName, $insertData, $returnColumns = null)
     {
         $this->disableAutoClass();
 
-        if ($this->_autoClassEnabled) {
-            $this->_tableName = $tableName;
+        if ($this->autoClassEnabled) {
+            $this->setTableName($tableName);
         }
-        $table = $this->_quoteTableName($tableName);
-        $this->_query = "INSERT INTO $table";
+        $table = $this->quoteTableName($tableName);
+        $this->query = "INSERT INTO $table";
 
-        $stmt = $this->_buildQuery(null, $insertData, $returnColumns);
-        $res = $this->_execStatement($stmt, false);
-        $return = $this->_returnWithReturning($res);
+        $stmt = $this->buildQuery(null, $insertData, $returnColumns);
+        $res = $this->execStatement($stmt, false);
+        $return = $this->returnWithReturning($res);
         $this->reset();
         return $return;
     }
@@ -902,23 +913,23 @@ class PostgresDb
      * @param string|string[]|null $returnColumns Which columns to return
      *
      * @return mixed Boolean if $returnColumns is not specified, the returned columns' values otherwise
-     * @throws InvalidArgumentException
-     * @throws PDOException
-     * @throws RuntimeException
+     * @throws \InvalidArgumentException
+     * @throws \PDOException
+     * @throws \RuntimeException
      */
     public function delete($tableName, $returnColumns = null)
     {
-        if (!empty($this->_join) || !empty($this->_orderBy) || !empty($this->_groupBy)) {
-            throw new RuntimeException(__METHOD__ . ' cannot be used with JOIN, ORDER BY or GROUP BY');
+        if (!empty($this->join) || !empty($this->orderBy) || !empty($this->groupBy)) {
+            throw new \RuntimeException(__METHOD__ . ' cannot be used with JOIN, ORDER BY or GROUP BY');
         }
         $this->disableAutoClass();
 
-        $table = $this->_quoteTableName($tableName);
-        $this->_query = "DELETE FROM $table";
+        $table = $this->quoteTableName($tableName);
+        $this->query = "DELETE FROM $table";
 
-        $stmt = $this->_buildQuery(null, null, $returnColumns);
-        $res = $this->_execStatement($stmt, false);
-        $return = $this->_returnWithReturning($res);
+        $stmt = $this->buildQuery(null, null, $returnColumns);
+        $res = $this->execStatement($stmt, false);
+        $return = $this->returnWithReturning($res);
         $this->reset();
         return $return;
     }
@@ -931,10 +942,11 @@ class PostgresDb
      * @param string $joinTable The name of the table.
      * @param string $joinCondition the condition.
      * @param string $joinType 'LEFT', 'INNER' etc.
-     * @param bool $disableAutoClass Disable automatic result conversion to class (since result may contain data from other tables)
+     * @param bool $disableAutoClass Disable automatic result conversion to class
+     *                               (since result may contain data from other tables)
      *
      * @return self
-     * @throws RuntimeException
+     * @throws \RuntimeException
      */
     public function join($joinTable, $joinCondition, $joinType = '', $disableAutoClass = true)
     {
@@ -942,11 +954,11 @@ class PostgresDb
         $joinType = strtoupper(trim($joinType));
 
         if ($joinType && !in_array($joinType, $allowedTypes, true)) {
-            throw new RuntimeException(__METHOD__ . ' expects argument 3 to be a valid join type');
+            throw new \RuntimeException(__METHOD__ . ' expects argument 3 to be a valid join type');
         }
 
-        $joinTable = $this->_quoteTableName($joinTable);
-        $this->_join[] = [$joinType, $joinTable, $joinCondition];
+        $joinTable = $this->quoteTableName($joinTable);
+        $this->join[] = [$joinType, $joinTable, $joinCondition];
 
         if ($disableAutoClass) {
             $this->disableAutoClass();
@@ -961,8 +973,8 @@ class PostgresDb
      * @param string $table Table name to check
      *
      * @return boolean True if table exists
-     * @throws PDOException
-     * @throws RuntimeException
+     * @throws \PDOException
+     * @throws \RuntimeException
      */
     public function tableExists($table)
     {
@@ -979,10 +991,10 @@ class PostgresDb
      *
      * @return self
      */
-    public function setClass($class, $type = PDO::FETCH_CLASS)
+    public function setClass($class, $type = \PDO::FETCH_CLASS)
     {
-        $this->_fetchType = $type;
-        $this->_fetchArg = $class;
+        $this->fetchType = $type;
+        $this->fetchArg = $class;
 
         return $this;
     }
@@ -994,28 +1006,28 @@ class PostgresDb
      */
     public function disableAutoClass()
     {
-        $this->_autoClassEnabled = false;
+        $this->autoClassEnabled = false;
 
         return $this;
     }
 
     /**
-     * @param PDOStatement $stmt Statement to execute
+     * @param \PDOStatement $stmt Statement to execute
      * @param boolean $reset Whether the object should be reset (must be done manually if set to false)
      *
-     * @return bool|mixed
-     * @throws PDOException
+     * @return array|false
+     * @throws \PDOException
      */
-    protected function _execStatement($stmt, $reset = true)
+    protected function execStatement($stmt, $reset = true)
     {
-        $this->_lastQuery = $this->_bindParams !== null
-            ? self::replacePlaceHolders($this->_query, $this->_bindParams)
-            : $this->_query;
+        $this->lastQuery = $this->bindParams !== null
+            ? self::replacePlaceHolders($this->query, $this->bindParams)
+            : $this->query;
 
         try {
-            $success = $stmt->execute($this->_bindParams);
-        } catch (PDOException $e) {
-            $this->_stmtError = $e->getMessage();
+            $success = $stmt->execute($this->bindParams);
+        } catch (\PDOException $e) {
+            $this->stmtError = $e->getMessage();
             $this->reset();
             throw $e;
         }
@@ -1023,35 +1035,48 @@ class PostgresDb
         if ($success !== true) {
             $this->count = 0;
             $errInfo = $stmt->errorInfo();
-            $this->_stmtError = "PDO Error #{$errInfo[1]}: {$errInfo[2]}";
+            $this->stmtError = "PDO Error #{$errInfo[1]}: {$errInfo[2]}";
             $result = false;
         } else {
             $this->count = $stmt->rowCount();
-            $this->_stmtError = null;
-            $result = $this->_fetchArg !== null
-                ? $stmt->fetchAll($this->_fetchType, $this->_fetchArg)
-                : $stmt->fetchAll($this->_fetchType);
+            $this->stmtError = null;
+            $result = $this->fetchArg !== null
+                ? $stmt->fetchAll($this->fetchType, $this->fetchArg)
+                : $stmt->fetchAll($this->fetchType);
         }
 
         if ($reset) {
             $this->reset();
         }
+
         return $result;
     }
 
     public function reset()
     {
-        $this->_autoClassEnabled = true;
-        $this->_tableName = null;
-        $this->_fetchType = PDO::FETCH_ASSOC;
-        $this->_fetchArg = null;
-        $this->_where = [];
-        $this->_join = [];
-        $this->_orderBy = [];
-        $this->_groupBy = [];
-        $this->_bindParams = [];
-        $this->_query = null;
-        $this->_returning = null;
+        $this->autoClassEnabled = true;
+        $this->tableName = null;
+        $this->fetchType = \PDO::FETCH_ASSOC;
+        $this->fetchArg = null;
+        $this->where = [];
+        $this->join = [];
+        $this->orderBy = [];
+        $this->groupBy = [];
+        $this->bindParams = [];
+        $this->query = null;
+        $this->returning = null;
+    }
+
+    /**
+     * @param mixed $name
+     * @throws \RuntimeException
+     */
+    private function setTableName($name)
+    {
+        if (!is_string($name)) {
+            throw new \RuntimeException('Argument $table_name must be string, ' . gettype($name) . ' given');
+        }
+        $this->tableName = $name;
     }
 
     /**
@@ -1060,19 +1085,19 @@ class PostgresDb
      * @param mixed $res Result of an executed statement
      * @return bool|mixed
      */
-    protected function _returnWithReturning($res)
+    protected function returnWithReturning($res)
     {
         if ($res === false || $this->count < 1) {
             return false;
         }
 
-        if ($this->_returning !== null) {
+        if ($this->returning !== null) {
             if (!is_array($res)) {
                 return false;
             }
 
             // If we got a single column to return then just return it
-            if (count($this->_returning) === 1) {
+            if (count($this->returning) === 1) {
                 return array_values($res[0])[0];
             }
 
@@ -1086,13 +1111,13 @@ class PostgresDb
     /**
      * Get the first entry in a query if it exists, otherwise, return null
      *
-     * @param array $query Array containing the query results
+     * @param array|false $query Array containing the query results or false
      *
      * @return array|null
      */
-    protected function _singleRow($query)
+    protected function singleRow($query)
     {
-        return empty($query[0]) ? null : $query[0];
+        return $query === false || empty($query[0]) ? null : $query[0];
     }
 
     /**
@@ -1102,7 +1127,7 @@ class PostgresDb
      *
      * @return string
      */
-    protected function _quoteTableName($tableName)
+    protected function quoteTableName($tableName)
     {
         return preg_replace('~^"?([a-zA-Z\d_\-]+)"?(?:\s*(\s[a-zA-Z\d]+))?$~', '"$1"$2', trim($tableName));
     }
@@ -1114,23 +1139,28 @@ class PostgresDb
      * @param bool $allowAs Controls whether "column as alias" can be used
      *
      * @return string
-     * @throws InvalidArgumentException
-     * @throws RuntimeException
+     * @throws \InvalidArgumentException
+     * @throws \RuntimeException
      */
-    protected function _quoteColumnName($columnName, $allowAs = false)
+    protected function quoteColumnName($columnName, $allowAs = false)
     {
         $columnName = trim($columnName);
         $hasAs = preg_match('~\S\s+AS\s+\S~i', $columnName);
         if ($allowAs && $hasAs) {
-            $columnName = implode(' AS ', $this->_quoteColumnNames(preg_split('~\s+AS\s+~i', $columnName)));
+            $columnName = implode(' AS ', $this->quoteColumnNames(preg_split('~\s+AS\s+~i', $columnName)));
         } elseif (!$allowAs && $hasAs) {
-            throw new InvalidArgumentException(__METHOD__ . ": Column name ($columnName) contains disallowed AS keyword");
+            throw new \InvalidArgumentException(
+                __METHOD__ . ": Column name ($columnName) contains disallowed AS keyword"
+            );
         }
 
         // JSON(B) access
-        if (strpos($columnName, '->>') !== false && preg_match('~^"?([a-z_\-\d]+)"?->>\'?([\w\-]+)\'?"?$~', $columnName,
-                $match)) {
-            return "\"$match[1]\"" . (!empty($match[2]) ? "->>'" . self::_escapeApostrophe($match[2]) . "'" : '');
+        if (strpos($columnName, '->>') !== false && preg_match(
+            '~^"?([a-z_\-\d]+)"?->>\'?([\w\-]+)\'?"?$~',
+            $columnName,
+            $match
+        )) {
+            return "\"$match[1]\"" . (!empty($match[2]) ? "->>'" . self::escapeApostrophe($match[2]) . "'" : '');
         }
         // Let's not mess with TOO complex column names (containing || or ')
         if (strpos($columnName, '||') !== false || preg_match('~\'(?<!\\\\\')~', $columnName)) {
@@ -1140,14 +1170,15 @@ class PostgresDb
         if (strpos($columnName, '.') !== false && preg_match($dotTest = '~\.(?<!\\\\\.)~', $columnName)) {
             $split = preg_split($dotTest, $columnName);
             if (count($split) > 2) {
-                throw new RuntimeException("Column $columnName contains more than one table separation dot");
+                throw new \RuntimeException("Column $columnName contains more than one table separation dot");
             }
 
-            return $this->_quoteTableName($split[0]) . '.' . $this->_quoteColumnName($split[1]);
+            return $this->quoteTableName($split[0]) . '.' . $this->quoteColumnName($split[1]);
         }
-        if (!preg_match('~(^\w+\(|^\s*\*\s*$)~', $columnName) && (!preg_match('~^(?=[a-z_])([a-z\d_]+)$~',
-                    $columnName) || isset($this->_sqlKeywords[strtolower($columnName)]))
-        ) {
+        $functionCallOrAsterisk = preg_match('~(^\w+\(|^\s*\*\s*$)~', $columnName);
+        $validColumnName = preg_match('~^(?=[a-z_])([a-z\d_]+)$~', $columnName);
+        $isSqlKeyword = isset($this->sqlKeywords[strtolower($columnName)]);
+        if (!$functionCallOrAsterisk && (!$validColumnName || $isSqlKeyword)) {
             return '"' . trim($columnName, '"') . '"';
         }
 
@@ -1161,13 +1192,13 @@ class PostgresDb
      * @param bool $allowAs
      *
      * @return string[]
-     * @throws InvalidArgumentException
-     * @throws RuntimeException
+     * @throws \InvalidArgumentException
+     * @throws \RuntimeException
      */
-    protected function _quoteColumnNames($columnNames, $allowAs = false)
+    protected function quoteColumnNames($columnNames, $allowAs = false)
     {
         foreach ($columnNames as $i => $columnName) {
-            $columnNames[$i] = $this->_quoteColumnName($columnName, $allowAs);
+            $columnNames[$i] = $this->quoteColumnName($columnName, $allowAs);
         }
 
         return $columnNames;
@@ -1176,9 +1207,9 @@ class PostgresDb
     /**
      * Replaces some custom shortcuts to make the query valid
      */
-    protected function _alterQuery()
+    protected function alterQuery()
     {
-        $this->_query = preg_replace('~(\s+)&&(\s+)~', '$1AND$2', $this->_query);
+        $this->query = preg_replace('~(\s+)&&(\s+)~', '$1AND$2', $this->query);
     }
 
     /**
@@ -1188,7 +1219,7 @@ class PostgresDb
      */
     public function getLastQuery()
     {
-        return $this->_lastQuery;
+        return $this->lastQuery;
     }
 
     /**
@@ -1198,16 +1229,17 @@ class PostgresDb
      */
     public function getLastError()
     {
-        if (!$this->_connection) {
+        if (!$this->connection) {
             return 'No connection has been made yet';
         }
 
-        return trim($this->_stmtError);
+        return trim($this->stmtError);
     }
 
     /**
      * Returns the class name expected for the table name
-     * This is a utility function for use in case you want to make your own automatic table<->class bindings using a wrapper class
+     * This is a utility function for use in case you want to make your own
+     * automatic table<->class bindings using a wrapper class
      *
      * @param bool $hasNamespace
      *
@@ -1215,12 +1247,16 @@ class PostgresDb
      */
     public function tableNameToClassName($hasNamespace = false)
     {
-        $className = $this->_tableName;
+        $className = $this->tableName;
+
         if (is_string($className)) {
-            $className = preg_replace('/s(_|$)/', '$1',
+            $className = preg_replace(
+                '/s(_|$)/',
+                '$1',
                 preg_replace('/ies([-_]|$)/', 'y$1', preg_replace_callback('/(?:^|-)([a-z])/', function ($match) {
                     return strtoupper($match[1]);
-                }, $className)));
+                }, $className))
+            );
             $append = $hasNamespace ? '\\' : '';
             $className = preg_replace_callback('/__?([a-z])/', function ($match) use ($append) {
                 return $append . strtoupper($match[1]);
@@ -1231,46 +1267,12 @@ class PostgresDb
     }
 
     /**
-     * @deprecated Renamed to query as of v2.0
-     *
-     * @param string $query
-     * @param array $bindParams
-     *
-     * @return array
-     * @throws RuntimeException
-     * @throws PDOException
-     */
-    public function rawQuery($query, $bindParams = null)
-    {
-        trigger_error(__METHOD__ . ' has been renamed to query, please update your code accordingly', E_USER_DEPRECATED);
-
-        return $this->query($query, $bindParams);
-    }
-
-    /**
-     * @deprecated Renamed to query as of v2.0
-     *
-     * @param string $query
-     * @param array $bindParams
-     *
-     * @return array
-     * @throws RuntimeException
-     * @throws PDOException
-     */
-    public function rawQuerySingle($query, $bindParams = null)
-    {
-        trigger_error(__METHOD__ . ' has been renamed to querySingle, please update your code accordingly', E_USER_DEPRECATED);
-
-        return $this->querySingle($query, $bindParams);
-    }
-
-    /**
      * Close connection
      */
     public function __destruct()
     {
-        if ($this->_connection) {
-            $this->_connection = null;
+        if ($this->connection) {
+            $this->connection = null;
         }
     }
 }
