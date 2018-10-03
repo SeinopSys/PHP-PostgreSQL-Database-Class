@@ -365,7 +365,7 @@ echo $db->count; // 3
 With a simple wrapper class it's trivial to include a query counter if need be.
 
 ```php
-class PostgresDbWrapper extends PostgresDb
+class PostgresDbWrapper extends \SeinopSys\PostgresDb
 {
     public $query_count = 0;
 
@@ -374,10 +374,10 @@ class PostgresDbWrapper extends PostgresDb
      *
      * @return bool|array|object[]
      */
-    protected function _execStatement($stmt)
+    protected function execStatement($stmt)
     {
         $this->query_count++;
-        return parent::_execStatement($stmt);
+        return parent::execStatement($stmt);
     }
 }
 ```
@@ -389,19 +389,19 @@ The class contains two utility methods (`tableNameToClassName` and `setClass`) w
 This assumes an autoloader is configured within the project which allows classes to be loaded on the fly as needed. This method will cause the autoloader to attempt loading the class within the `Models` namespace when `class_exists` is called. If it fails, a key is set on a private array. This prevents future checks for the existence of the same class to avoid significantly impacting the application's performance.
 
 ```php
-class PostgresDbWrapper extends PostgresDb
+class PostgresDbWrapper extends \SeinopSys\PostgresDb
 {
-    private $_nonexistantClassCache = [];
+    private $nonexistantClassCache = [];
 
     /**
      * @param PDOStatement $stmt Statement to execute
      *
      * @return bool|array|object[]
      */
-    protected function _execStatement($stmt)
+    protected function execStatement($stmt)
     {
         $className = $this->tableNameToClassName();
-        if (isset($className) && empty($this->_nonexistantClassCache[$className])) {
+        if (isset($className) && empty($this->nonexistantClassCache[$className])) {
             try {
                 if (!class_exists("\\Models\\$className")) {
                     throw new Exception();
@@ -410,11 +410,11 @@ class PostgresDbWrapper extends PostgresDb
                 $this->setClass("\\Models\\$className");
             }
             catch (Exception $e) {
-                $this->_nonexistantClassCache[$className] = true;
+                $this->nonexistantClassCache[$className] = true;
             }
         }
 
-        return parent::_execStatement($stmt);
+        return parent::execStatement($stmt);
     }
 }
 ```

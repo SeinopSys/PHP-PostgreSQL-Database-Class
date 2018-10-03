@@ -37,3 +37,7 @@ For a more in-depth guide see [USAGE.md](USAGE.md)
      |`$db = new PostgresDb(…);`|`$db = new \SeinopSys\PostgresDb(…);`|
      |`$db = new \PostgresDb(…);`|`$db = new \SeinopSys\PostgresDb(…);`|
      |<pre>use \PostgresDb;<br><br>$db = new PostgresDb(…);</pre>|<pre>use \SeinopSys\PostgresDb;<br><br>$db = new PostgresDb(…);</pre>|
+
+ 3. **Internal code structure changes**
+ 
+    As of `3.x` all `private`/`protected` methods and properties have dropped the `_` prefix, so be sure to update your wrapper class (if you use one).
