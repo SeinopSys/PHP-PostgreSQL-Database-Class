@@ -1,0 +1,24 @@
+<?xml version="1.0"?>
+<ruleset name="PostgresDb">
+    <description>PSR2 with a few tweaks</description>
+    <exclude-pattern>vendor/.*</exclude-pattern>
+    <exclude-pattern>test.php</exclude-pattern>
+    <arg name="report" value="code"/>
+    <rule ref="PSR2"/>
+    <rule ref="Generic.Files.ByteOrderMark"/>
+    <rule ref="Squiz.Classes.ValidClassName"/>
+    <rule ref="Generic.NamingConventions.UpperCaseConstantName"/>
+    <rule ref="Squiz.NamingConventions.ValidVariableName"/>
+    <rule ref="Squiz.NamingConventions.ValidVariableName.PrivateNoUnderscore">
+        <severity>0</severity>
+    </rule>
+    <rule ref="Squiz.WhiteSpace.SuperfluousWhitespace">
+        <type>error</type>
+    </rule>
+    <rule ref="Squiz.Strings.DoubleQuoteUsage">
+        <type>error</type>
+    </rule>
+    <rule ref="Squiz.Strings.DoubleQuoteUsage.ContainsVar">
+        <severity>0</severity>
+    </rule>
+</ruleset>
