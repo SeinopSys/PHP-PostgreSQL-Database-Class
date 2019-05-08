@@ -2,6 +2,12 @@
 
 namespace SeinopSys;
 
+use InvalidArgumentException;
+use PDO;
+use PDOException;
+use PDOStatement;
+use RuntimeException;
+
 /**
  * PostgresDb Class
  * by @SeinopSys | https://github.com/SeinopSys/PHP-PostgreSQL-Database-Class
@@ -18,7 +24,7 @@ class PostgresDb
     /**
      * PDO connection
      *
-     * @var \PDO
+     * @var PDO
      */
     protected $connection;
     /**
@@ -82,7 +88,7 @@ class PostgresDb
      *
      * @var int
      */
-    protected $fetchType = \PDO::FETCH_ASSOC;
+    protected $fetchType = PDO::FETCH_ASSOC;
     /**
      * Fetch argument
      *
@@ -95,7 +101,7 @@ class PostgresDb
      *
      * @var int
      */
-    protected $errorMode = \PDO::ERRMODE_WARNING;
+    protected $errorMode = PDO::ERRMODE_WARNING;
     /**
      * List of keywords used for escaping column names, automatically populated on connection
      *
@@ -145,19 +151,19 @@ CONNSTR;
     /**
      * Initiate a database connection using the data passed in the constructor
      *
-     * @throws \PDOException
-     * @throws \RuntimeException
+     * @throws PDOException
+     * @throws RuntimeException
      */
     protected function connect()
     {
-        $this->setConnection(new \PDO($this->connectionString));
-        $this->connection->setAttribute(\PDO::ATTR_ERRMODE, $this->errorMode);
+        $this->setConnection(new PDO($this->connectionString));
+        $this->connection->setAttribute(PDO::ATTR_ERRMODE, $this->errorMode);
     }
 
     /**
-     * @return \PDO
-     * @throws \RuntimeException
-     * @throws \PDOException
+     * @return PDO
+     * @throws RuntimeException
+     * @throws PDOException
      */
     public function getConnection()
     {
@@ -171,12 +177,12 @@ CONNSTR;
     /**
      * Allows passing any PDO object to the class, e.g. one initiated by a different library
      *
-     * @param \PDO $PDO
+     * @param PDO $PDO
      *
-     * @throws \PDOException
-     * @throws \RuntimeException
+     * @throws PDOException
+     * @throws RuntimeException
      */
-    public function setConnection(\PDO $PDO)
+    public function setConnection(PDO $PDO)
     {
         $this->connection = $PDO;
         $keywords = $this->query('SELECT word FROM pg_get_keywords()');
@@ -197,7 +203,7 @@ CONNSTR;
     {
         $this->errorMode = $errmode;
         if ($this->connection) {
-            $this->connection->setAttribute(\PDO::ATTR_ERRMODE, $this->errorMode);
+            $this->connection->setAttribute(PDO::ATTR_ERRMODE, $this->errorMode);
         }
 
         return $this;
@@ -217,15 +223,15 @@ CONNSTR;
      * Method attempts to prepare the SQL query
      * and throws an error if there was a problem.
      *
-     * @return \PDOStatement
-     * @throws \RuntimeException
+     * @return PDOStatement
+     * @throws RuntimeException
      */
     protected function prepareQuery()
     {
         try {
             $stmt = $this->getConnection()->prepare($this->query);
-        } catch (\PDOException $e) {
-            throw new \RuntimeException(
+        } catch (PDOException $e) {
+            throw new RuntimeException(
                 "Problem preparing query ($this->query): " . $e->getMessage(),
                 $e->getCode(),
                 $e
@@ -233,7 +239,7 @@ CONNSTR;
         }
 
         if (is_bool($stmt)) {
-            throw new \RuntimeException("Problem preparing query ($this->query). Check logs/stderr for any warnings.");
+            throw new RuntimeException("Problem preparing query ($this->query). Check logs/stderr for any warnings.");
         }
 
         return $stmt;
@@ -376,8 +382,8 @@ CONNSTR;
     /**
      * Abstraction method that will build the part of the WHERE conditions
      *
-     * @throws \InvalidArgumentException
-     * @throws \RuntimeException
+     * @throws InvalidArgumentException
+     * @throws RuntimeException
      */
     protected function buildWhere()
     {
@@ -416,7 +422,7 @@ CONNSTR;
                 case 'NOT IN':
                 case 'IN':
                     if (!is_array($whereValue)) {
-                        throw new \InvalidArgumentException(
+                        throw new InvalidArgumentException(
                             __METHOD__ . ' expects $whereValue to be an array when using IN/NOT IN'
                         );
                     }
@@ -462,8 +468,8 @@ CONNSTR;
      *
      * @param string|string[]|null $returning What column(s) to return
      *
-     * @throws \InvalidArgumentException
-     * @throws \RuntimeException
+     * @throws InvalidArgumentException
+     * @throws RuntimeException
      */
     protected function buildReturning($returning)
     {
@@ -487,7 +493,7 @@ CONNSTR;
      * @param string[] $tableColumns
      * @param bool $isInsert
      *
-     * @throws \RuntimeException
+     * @throws RuntimeException
      */
     public function buildDataPairs($tableData, $tableColumns, $isInsert)
     {
@@ -505,7 +511,7 @@ CONNSTR;
             }
 
             if ($isInsert) {
-                throw new \RuntimeException("Array passed as insert value for column $column");
+                throw new RuntimeException("Array passed as insert value for column $column");
             }
 
             $this->query .= '';
@@ -529,8 +535,8 @@ CONNSTR;
      *
      * @param array $tableData
      *
-     * @throws \RuntimeException
-     * @throws \InvalidArgumentException
+     * @throws RuntimeException
+     * @throws InvalidArgumentException
      */
     protected function buildInsertQuery($tableData)
     {
@@ -556,8 +562,8 @@ CONNSTR;
     /**
      * Abstraction method that will build the GROUP BY part of the WHERE statement
      *
-     * @throws \InvalidArgumentException
-     * @throws \RuntimeException
+     * @throws InvalidArgumentException
+     * @throws RuntimeException
      */
     protected function buildGroupBy()
     {
@@ -571,7 +577,7 @@ CONNSTR;
     /**
      * Abstraction method that will build the LIMIT part of the WHERE statement
      *
-     * @throws \InvalidArgumentException
+     * @throws InvalidArgumentException
      */
     protected function buildOrderBy()
     {
@@ -615,9 +621,9 @@ CONNSTR;
      * @param array $tableData Should contain an array of data for updating the database.
      * @param string|string[]|null $returning What column(s) to return after inserting
      *
-     * @return \PDOStatement|bool Returns the $stmt object.
-     * @throws \InvalidArgumentException
-     * @throws \RuntimeException
+     * @return PDOStatement|bool Returns the $stmt object.
+     * @throws InvalidArgumentException
+     * @throws RuntimeException
      */
     protected function buildQuery($numRows = null, $tableData = null, $returning = null)
     {
@@ -642,8 +648,8 @@ CONNSTR;
      * @param array $bindParams Variables array to bind to the SQL statement.
      *
      * @return array|false Array containing the returned rows from the query or false on failure
-     * @throws \RuntimeException
-     * @throws \PDOException
+     * @throws RuntimeException
+     * @throws PDOException
      */
     public function query($query, $bindParams = null)
     {
@@ -654,7 +660,7 @@ CONNSTR;
         if (empty($bindParams)) {
             $this->bindParams = null;
         } elseif (!is_array($bindParams)) {
-            throw new \RuntimeException('$bindParams must be an array');
+            throw new RuntimeException('$bindParams must be an array');
         } else {
             $this->bindParams($bindParams);
         }
@@ -669,8 +675,8 @@ CONNSTR;
      * @param array $bindParams Variables array to bind to the SQL statement.
      *
      * @return array
-     * @throws \RuntimeException
-     * @throws \PDOException
+     * @throws RuntimeException
+     * @throws PDOException
      */
     public function querySingle($query, $bindParams = null)
     {
@@ -683,9 +689,9 @@ CONNSTR;
      * @param string $table Name of table
      *
      * @return int
-     * @throws \InvalidArgumentException
-     * @throws \PDOException
-     * @throws \RuntimeException
+     * @throws InvalidArgumentException
+     * @throws PDOException
+     * @throws RuntimeException
      */
     public function count($table)
     {
@@ -747,8 +753,8 @@ CONNSTR;
      * @param string $orderByDirection
      *
      * @return self
-     * @throws \InvalidArgumentException
-     * @throws \RuntimeException
+     * @throws InvalidArgumentException
+     * @throws RuntimeException
      */
     public function orderBy($orderByColumn, $orderByDirection = 'ASC')
     {
@@ -756,7 +762,7 @@ CONNSTR;
         $orderByColumn = $this->quoteColumnName($orderByColumn);
 
         if (!is_string($orderByDirection) || !preg_match('~^(ASC|DESC)~', $orderByDirection)) {
-            throw new \RuntimeException('Wrong order direction ' . $orderByDirection . ' on field ' . $orderByColumn);
+            throw new RuntimeException('Wrong order direction ' . $orderByDirection . ' on field ' . $orderByColumn);
         }
 
         $this->orderBy[$orderByColumn] = $orderByDirection;
@@ -787,9 +793,9 @@ CONNSTR;
      * @param string|array $columns
      *
      * @return array|false Contains the returned rows from the select query or false on failure
-     * @throws \InvalidArgumentException
-     * @throws \PDOException
-     * @throws \RuntimeException
+     * @throws InvalidArgumentException
+     * @throws PDOException
+     * @throws RuntimeException
      */
     public function get($tableName, $numRows = null, $columns = null)
     {
@@ -820,9 +826,9 @@ CONNSTR;
      * @param string $columns
      *
      * @return mixed|null
-     * @throws \InvalidArgumentException
-     * @throws \PDOException
-     * @throws \RuntimeException
+     * @throws InvalidArgumentException
+     * @throws PDOException
+     * @throws RuntimeException
      */
     public function getOne($tableName, $columns = '*')
     {
@@ -846,9 +852,9 @@ CONNSTR;
      * @param string $tableName The name of the database table to work with.
      *
      * @return bool
-     * @throws \InvalidArgumentException
-     * @throws \PDOException
-     * @throws \RuntimeException
+     * @throws InvalidArgumentException
+     * @throws PDOException
+     * @throws RuntimeException
      */
     public function has($tableName)
     {
@@ -862,9 +868,9 @@ CONNSTR;
      * @param array $tableData Array of data to update the desired row.
      *
      * @return bool
-     * @throws \InvalidArgumentException
-     * @throws \PDOException
-     * @throws \RuntimeException
+     * @throws InvalidArgumentException
+     * @throws PDOException
+     * @throws RuntimeException
      */
     public function update($tableName, $tableData)
     {
@@ -885,9 +891,9 @@ CONNSTR;
      * @param string|string[]|null $returnColumns Which columns to return
      *
      * @return mixed Boolean if $returnColumns is not specified, the returned columns' values otherwise
-     * @throws \InvalidArgumentException
-     * @throws \PDOException
-     * @throws \RuntimeException
+     * @throws InvalidArgumentException
+     * @throws PDOException
+     * @throws RuntimeException
      */
     public function insert($tableName, $insertData, $returnColumns = null)
     {
@@ -913,14 +919,14 @@ CONNSTR;
      * @param string|string[]|null $returnColumns Which columns to return
      *
      * @return mixed Boolean if $returnColumns is not specified, the returned columns' values otherwise
-     * @throws \InvalidArgumentException
-     * @throws \PDOException
-     * @throws \RuntimeException
+     * @throws InvalidArgumentException
+     * @throws PDOException
+     * @throws RuntimeException
      */
     public function delete($tableName, $returnColumns = null)
     {
         if (!empty($this->join) || !empty($this->orderBy) || !empty($this->groupBy)) {
-            throw new \RuntimeException(__METHOD__ . ' cannot be used with JOIN, ORDER BY or GROUP BY');
+            throw new RuntimeException(__METHOD__ . ' cannot be used with JOIN, ORDER BY or GROUP BY');
         }
         $this->disableAutoClass();
 
@@ -946,7 +952,7 @@ CONNSTR;
      *                               (since result may contain data from other tables)
      *
      * @return self
-     * @throws \RuntimeException
+     * @throws RuntimeException
      */
     public function join($joinTable, $joinCondition, $joinType = '', $disableAutoClass = true)
     {
@@ -954,7 +960,7 @@ CONNSTR;
         $joinType = strtoupper(trim($joinType));
 
         if ($joinType && !in_array($joinType, $allowedTypes, true)) {
-            throw new \RuntimeException(__METHOD__ . ' expects argument 3 to be a valid join type');
+            throw new RuntimeException(__METHOD__ . ' expects argument 3 to be a valid join type');
         }
 
         $joinTable = $this->quoteTableName($joinTable);
@@ -973,8 +979,8 @@ CONNSTR;
      * @param string $table Table name to check
      *
      * @return boolean True if table exists
-     * @throws \PDOException
-     * @throws \RuntimeException
+     * @throws PDOException
+     * @throws RuntimeException
      */
     public function tableExists($table)
     {
@@ -991,7 +997,7 @@ CONNSTR;
      *
      * @return self
      */
-    public function setClass($class, $type = \PDO::FETCH_CLASS)
+    public function setClass($class, $type = PDO::FETCH_CLASS)
     {
         $this->fetchType = $type;
         $this->fetchArg = $class;
@@ -1012,11 +1018,11 @@ CONNSTR;
     }
 
     /**
-     * @param \PDOStatement $stmt Statement to execute
+     * @param PDOStatement $stmt Statement to execute
      * @param boolean $reset Whether the object should be reset (must be done manually if set to false)
      *
      * @return array|false
-     * @throws \PDOException
+     * @throws PDOException
      */
     protected function execStatement($stmt, $reset = true)
     {
@@ -1026,7 +1032,7 @@ CONNSTR;
 
         try {
             $success = $stmt->execute($this->bindParams);
-        } catch (\PDOException $e) {
+        } catch (PDOException $e) {
             $this->stmtError = $e->getMessage();
             $this->reset();
             throw $e;
@@ -1056,7 +1062,7 @@ CONNSTR;
     {
         $this->autoClassEnabled = true;
         $this->tableName = null;
-        $this->fetchType = \PDO::FETCH_ASSOC;
+        $this->fetchType = PDO::FETCH_ASSOC;
         $this->fetchArg = null;
         $this->where = [];
         $this->join = [];
@@ -1069,12 +1075,12 @@ CONNSTR;
 
     /**
      * @param mixed $name
-     * @throws \RuntimeException
+     * @throws RuntimeException
      */
     private function setTableName($name)
     {
         if (!is_string($name)) {
-            throw new \RuntimeException('Argument $table_name must be string, ' . gettype($name) . ' given');
+            throw new RuntimeException('Argument $table_name must be string, ' . gettype($name) . ' given');
         }
         $this->tableName = $name;
     }
@@ -1139,17 +1145,20 @@ CONNSTR;
      * @param bool $allowAs Controls whether "column as alias" can be used
      *
      * @return string
-     * @throws \InvalidArgumentException
-     * @throws \RuntimeException
+     * @throws InvalidArgumentException
+     * @throws RuntimeException
      */
     protected function quoteColumnName($columnName, $allowAs = false)
     {
+        $columnAlias = '';
         $columnName = trim($columnName);
         $hasAs = preg_match('~\S\s+AS\s+\S~i', $columnName);
         if ($allowAs && $hasAs) {
-            $columnName = implode(' AS ', $this->quoteColumnNames(preg_split('~\s+AS\s+~i', $columnName)));
+            $values = $this->quoteColumnNames(preg_split('~\s+AS\s+~i', $columnName));
+            $columnName = $values[0];
+            $columnAlias = " AS $values[1]";
         } elseif (!$allowAs && $hasAs) {
-            throw new \InvalidArgumentException(
+            throw new InvalidArgumentException(
                 __METHOD__ . ": Column name ($columnName) contains disallowed AS keyword"
             );
         }
@@ -1160,29 +1169,30 @@ CONNSTR;
             $columnName,
             $match
         )) {
-            return "\"$match[1]\"" . (!empty($match[2]) ? "->>'" . self::escapeApostrophe($match[2]) . "'" : '');
+            $col = "\"$match[1]\"";
+            return $col . (!empty($match[2]) ? "->>'" . self::escapeApostrophe($match[2]) . "'" : '') . $columnAlias;
         }
         // Let's not mess with TOO complex column names (containing || or ')
         if (strpos($columnName, '||') !== false || preg_match('~\'(?<!\\\\\')~', $columnName)) {
-            return $columnName;
+            return $columnName . $columnAlias;
         }
 
         if (strpos($columnName, '.') !== false && preg_match($dotTest = '~\.(?<!\\\\\.)~', $columnName)) {
             $split = preg_split($dotTest, $columnName);
             if (count($split) > 2) {
-                throw new \RuntimeException("Column $columnName contains more than one table separation dot");
+                throw new RuntimeException("Column $columnName contains more than one table separation dot");
             }
 
-            return $this->quoteTableName($split[0]) . '.' . $this->quoteColumnName($split[1]);
+            return $this->quoteTableName($split[0]) . '.' . $this->quoteColumnName($split[1]) . $columnAlias;
         }
         $functionCallOrAsterisk = preg_match('~(^\w+\(|^\s*\*\s*$)~', $columnName);
         $validColumnName = preg_match('~^(?=[a-z_])([a-z\d_]+)$~', $columnName);
         $isSqlKeyword = isset($this->sqlKeywords[strtolower($columnName)]);
         if (!$functionCallOrAsterisk && (!$validColumnName || $isSqlKeyword)) {
-            return '"' . trim($columnName, '"') . '"';
+            return '"' . trim($columnName, '"') . '"' . $columnAlias;
         }
 
-        return $columnName;
+        return $columnName . $columnAlias;
     }
 
     /**
@@ -1192,8 +1202,8 @@ CONNSTR;
      * @param bool $allowAs
      *
      * @return string[]
-     * @throws \InvalidArgumentException
-     * @throws \RuntimeException
+     * @throws InvalidArgumentException
+     * @throws RuntimeException
      */
     protected function quoteColumnNames($columnNames, $allowAs = false)
     {
