@@ -170,6 +170,11 @@ checkQuery('SELECT id FROM "users"', 'GET_QUERY_COLUMNS_MISMATCH');
 // Check get with complex column(s)
 $users = $db->get('users', null, "'ayy-'||id as happy_id");
 checkQuery("SELECT 'ayy-'||id AS happy_id FROM \"users\"", 'GET_QUERY_COLUMNS_MISMATCH');
+// Check get with column aliases
+$users = $db->get('users', null, 'id as user_id');
+checkQuery('SELECT id AS user_id FROM "users"', 'GET_QUERY_COLUMNS_MISMATCH');
+$users = $db->get('users', null, 'id as limit, name as from');
+checkQuery('SELECT id AS "limit", "name" AS "from" FROM "users"', 'GET_QUERY_COLUMNS_MISMATCH');
 
 # Check PDO error mode setting
 $db->setPDOErrmode(PDO::ERRMODE_EXCEPTION);
