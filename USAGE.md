@@ -20,10 +20,10 @@ To start using the class you need to create an instance with the following param
 ```php
 use \SeinopSys\PostgresDb;
 
-$db = new PostgresDb($database_name, $host, $username, $password);
+$db = new PostgresDb($database_name, $host, $username, $password, $port);
 ```
 
-Due to the way these parameters are mapped to the internal connection call within PHP these values must not contain spaces.
+Due to the way these parameters are mapped to the internal connection call within PHP these values must not contain spaces. If you do not specify the `$port` parameter the PostgreSQL default (5432) will be used.
 
 Initializing the class does not immediately create a connection. To force a connection attempt, call:
 
