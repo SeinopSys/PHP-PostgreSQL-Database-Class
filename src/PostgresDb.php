@@ -140,11 +140,12 @@ class PostgresDb
      * @param string $host
      * @param string $user
      * @param string $pass
+     * @param int    $port
      */
-    public function __construct($db = '', $host = '', $user = '', $pass = '')
+    public function __construct($db = '', $host = '', $user = '', $pass = '', $port = 5432)
     {
         $this->connectionString = <<<CONNSTR
-pgsql:host=$host user=$user password=$pass dbname=$db options='--client_encoding=UTF8'
+pgsql:host=$host port=$port user=$user password=$pass dbname=$db options='--client_encoding=UTF8'
 CONNSTR;
     }
 
